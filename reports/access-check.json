@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-11-01T12:04:31+00:00",
+  "scope": "read_only_access_diagnostics",
+  "access_checks_passed": false,
+  "bot_ready": false,
+  "hermes_executable_present": false,
+  "credential_presence": [
+    {
+      "name": "NVIDIA_API_KEY",
+      "status": "missing"
+    },
+    {
+      "name": "EXA_API_KEY",
+      "status": "missing"
+    },
+    {
+      "name": "TELEGRAM_BOT_TOKEN",
+      "status": "missing"
+    },
+    {
+      "name": "single_numeric_telegram_owner",
+      "status": "missing_or_invalid"
+    }
+  ],
+  "network": [
+    {
+      "name": "nvidia_catalog_page",
+      "status": "proxy_policy_denied"
+    },
+    {
+      "name": "nvidia_api_docs",
+      "status": "proxy_policy_denied"
+    },
+    {
+      "name": "exa_pricing",
+      "status": "proxy_policy_denied"
+    },
+    {
+      "name": "exa_rate_limits",
+      "status": "proxy_policy_denied"
+    },
+    {
+      "name": "oracle_always_free_docs",
+      "status": "proxy_policy_denied"
+    },
+    {
+      "name": "nvidia_model_catalog",
+      "status": "skipped_missing_key"
+    }
+  ],
+  "inference_requests_performed": false,
+  "exa_search_requests_performed": false,
+  "oracle_resources_created": false,
+  "still_unverified": [
+    "NVIDIA account free eligibility, quota, expiry and prototype terms",
+    "Exact model ID and full installed-Hermes tool-call round trip",
+    "Full Hermes prompt/tool schema size versus provider request limits",
+    "Exa account free quota, permitted operations and billing disabled",
+    "Oracle account Always Free quotas, shape availability and access",
+    "Telegram owner identity, text, memory, tools and web end-to-end",
+    "Restart recovery, quota handling and backup restoration"
+  ]
+}

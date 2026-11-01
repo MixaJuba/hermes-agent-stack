@@ -1,0 +1,25 @@
+# Credentials and runtime data never belong in Git.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+auth.json
+gateway.json
+secrets/
+.oci/
+.hermes/
+.venv/
+__pycache__/
+*.py[cod]
+*.log
+*.sqlite*
+*.db
+backups/
+runtime/
+.terraform/
+*.tfstate*
+*.tfvars
+

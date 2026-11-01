@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/NousResearch/hermes-agent.git",
+  "release": "v0.22.5",
+  "commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+  "tag_object": "56b6a31fededdf7364e1a0a79548d144e7fd81a3",
+  "nvidia_base_url": "https://integrate.api.nvidia.com/v1",
+  "requested_model": "DeepSeek V4.1 Flash",
+  "verified_model_id": null,
+  "note": "Source pin verified with git ls-remote. Not an installed or tested Hermes runtime. Model ID, account quotas and free eligibility remain unverified."
+}
