@@ -18,10 +18,12 @@
 - Повний project regression: **20 PASS**.
 - Secret scan: PASS.
 - Oracle Home Region: **Germany Central (Frankfurt), `eu-frankfurt-1`**.
-- Oracle host уже реально створений: одна Always Free `VM.Standard.A1.Flex`, **1 OCPU / 6 GB**, ARM64, Ubuntu 24.04.5 LTS Minimal, 50 GB boot volume.
+- Oracle host реально створений: одна Always Free `VM.Standard.A1.Flex`, **1 OCPU / 6 GB**, ARM64, Ubuntu 24.04.5 LTS Minimal, 50 GB boot volume.
 - VM = `RUNNING`; SSH і повторне SSH-підключення PASS; outbound GitHub HTTPS/TLS PASS.
 - Мережа VM: public subnet, ephemeral public IPv4, Internet Gateway, ingress тільки TCP/22 з погодженого `/32`.
-- Платних ресурсів на L-002 не створено.
+- L-003 PASS: pinned Hermes **v0.22.5** нативно встановлений на Oracle ARM64 через PM; managed Python **3.14.9** і CLI реально запускаються.
+- Docker **29.1.3** ARM64 і `hermes-ua-sandbox:local` перевірені; native DockerEnvironment smoke test PASS, `network=none`, non-root, без secrets/socket/host checkout.
+- Нових inbound ports не відкривали; provider credentials не додавали; inference requests = 0.
 - Telegram bot існує: `@mixa_hermes_ua_bot`; gateway ще не запущений.
 - NVIDIA = **TEST ONLY**.
 - Production inference-provider навмисно **ще не обраний**: його буде визначено фактичними Hermes tool-loop і quota tests.
@@ -29,11 +31,11 @@
 
 ## Наступний етап
 
-**L-003 — Runtime on Oracle.**
+**Provider qualification.**
 
-На вже перевіреній Oracle ARM64 VM потрібно розгорнути тільки базовий pinned Hermes runtime і Docker sandbox та підтвердити їх нативну працездатність.
+На вже перевіреному Oracle/Hermes runtime потрібно провести один контрольований agent/tool-loop тест для придатного безкоштовного candidate provider і вибрати production route за фактом, без платного fallback.
 
-На L-003 ще не підключаються provider OAuth/API keys, Exa, Telegram token або production systemd service.
+Перший кандидат для перевірки — штатний Hermes `openai-codex`, якщо фактичний OAuth/usage route доступний і не вимагає окремого платного API-балансу. Якщо він не проходить критерії — перевіряється наступний безкоштовний кандидат.
 
 ## Цільова схема
 
@@ -48,7 +50,7 @@ Hermes Agent
    ├── Exa web search
    └── isolated Docker tools
 
-Host: перевірена Oracle Always Free A1 ARM64 VM.
+Host: перевірена Oracle Always Free A1 ARM64 VM з нативним Hermes runtime.
 ```
 
 ## Важливі правила
@@ -67,6 +69,7 @@ Host: перевірена Oracle Always Free A1 ARM64 VM.
 - [`AGENTS.md`](AGENTS.md) — сталі інструкції для Codex та інших AI-агентів.
 - [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md) — sanitized Oracle/Telegram/NVIDIA/Codex account precheck.
 - [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md) — підтверджений Oracle A1 host, SSH і мережеві перевірки.
+- [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md) — нативний Hermes runtime і Docker sandbox на Oracle ARM64.
 - [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md) — відновлення quota patch і 20 PASS.
 - [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md) — cloud runtime, sandbox, guard і deployment artifacts; технічний snapshot.
 - [`docs/BACKUP-QUOTA.uk.md`](docs/BACKUP-QUOTA.uk.md) — synthetic backup/restore та quota simulations.
