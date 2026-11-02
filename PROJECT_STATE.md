@@ -36,6 +36,7 @@
 
 - Бюджет: **0 грн** для постійної роботи.
 - Не використовувати автопоповнення, автоматичну покупку credits або платні fallback-маршрути.
+- ChatGPT/Codex allowance зарезервований для Локального та Хмарного Codex як розробницьких виконавців; production Hermes не повинен його споживати.
 - Hermes, його runtime і моделі не встановлювати на Windows-ноутбук користувача.
 - Голос, STT/TTS і Telethon зараз **не входять** у погоджену ціль.
 - Telegram — штатний gateway Hermes, long polling.
@@ -124,17 +125,26 @@ Oracle target / L-003:
 - `hermes-ua-sandbox:local` build: PASS.
 - Native `DockerEnvironment` smoke test: PASS.
 - Sandbox: non-root, writable isolated workspace, `network=none`, metadata route недоступний, published ports відсутні, secrets/Docker socket/host checkout відсутні.
-- Provider credentials не додавалися.
-- Inference requests: **0**.
-- Telegram gateway і production systemd service не запускалися.
-- Нових inbound ports не відкривали.
+- На завершенні L-003 provider credentials не додавалися, inference requests = 0, Telegram gateway і production systemd service не запускалися, нових inbound ports не відкривали.
+
+Oracle target / L-004A:
+
+- Штатний Hermes `openai-codex` OAuth через browser PKCE + SSH local tunnel: **PASS**.
+- Credential збережено на Oracle у service-account context з правами `0600`.
+- Реальний model slug: `gpt-6-luna`.
+- Короткий український turn: **PASS**.
+- Реальний Hermes-native model → tool → sandbox → tool result → final-answer цикл: **PASS**; контрольний результат `HERMES_CODEX_OK`.
+- Sandbox security properties під час tool-loop збережено.
+- `OPENAI_API_KEY` не використовувався; paid route, OpenRouter fallback, NVIDIA, Gemini, Telegram та Exa не використовувалися.
+- Usage delta між BEFORE/AFTER не атрибутується лише Hermes, бо в тому самому allowance працював Локальний Codex.
+- Production decision: `openai-codex` **НЕ використовувати в production**; Codex allowance зарезервовано для розробки.
 
 **UNKNOWN / ще не доведено**
 
-- Реальний model → tool → result → final-answer цикл на production-кандидаті.
+- Реальний model → tool → result → final-answer цикл на фактичному production-кандидаті.
 - Реальна Telegram delivery quota/billing message.
 
-Докази: [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md), [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md), [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md), [`reports/c001-recovery.json`](reports/c001-recovery.json).
+Докази: [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md), [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md), [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md), [`docs/L004A-OPENAI-CODEX-QUALIFICATION.uk.md`](docs/L004A-OPENAI-CODEX-QUALIFICATION.uk.md), [`reports/c001-recovery.json`](reports/c001-recovery.json).
 
 ### 6.2 Oracle Cloud
 
@@ -165,7 +175,7 @@ Provisioned host / L-002:
 - Outbound GitHub HTTPS: PASS, HTTP 200 на public endpoint, TLS verification PASS.
 - Платних ресурсів у межах L-002 не створено.
 
-У L-003 додано тільки необхідні prerequisites і Docker/runtime; нових inbound ports або paid resources не додано.
+У L-003/L-004A нових inbound ports або paid resources не додано; OAuth callback працював через локальний SSH tunnel.
 
 Докази: [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md), [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md), [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md).
 
@@ -195,24 +205,38 @@ Provisioned host / L-002:
 
 ### 6.5 Production inference-provider
 
-**UNRESOLVED — це навмисний стан.**
+**UNRESOLVED — фактичний production-provider ще не призначений.**
 
-Кандидати для фактичної кваліфікації на вже готовому Oracle/Hermes runtime:
+Вже перевірені/відсіяні варіанти:
 
-- штатний Hermes `openai-codex` через наявний ChatGPT/Codex доступ, якщо OAuth і usage-модель реально придатні;
-- native Gemini provider у межах доступного Free Tier, якщо реальні Hermes agent turns вкладаються у квоти;
-- інші безкоштовні provider-и лише якщо перші кандидати не проходять критерії.
+- `openai-codex`: **QUALIFIED TECHNICALLY**, але **REJECTED FOR PRODUCTION** — споживає ChatGPT/Codex allowance, який зарезервовано для Локального/Хмарного Codex.
+- Gemini Free: **НЕ ПЕРШИЙ КАНДИДАТ** — pinned Hermes підтримує native Gemini і tool calling, але власна документація Hermes попереджає, що Free Tier замалий для довготривалих agent sessions через кілька model calls на turn. Практичний тест відкладено, доки немає причини повертатися до цього варіанта.
+- Groq Free: **REJECTED WITHOUT LIVE TEST** — documented Free TPM ліміт недостатній для типового Hermes agent request із tool schemas; live test не виправданий.
+- Local LLM на поточній Oracle VM: **REJECTED AS PRIMARY ROUTE** — 1 OCPU / 6 GB ARM64 не дає прийнятної якості/швидкості для цільового agent workload.
 
-Критерії вибору однакові для кожного кандидата:
+**Поточний найкраще обґрунтований кандидат для мінімальної фактичної кваліфікації: Cloudflare Workers AI Free.**
 
-1. успішна авторизація без платного API-балансу;
-2. українська відповідь;
-3. реальний Hermes tool call;
-4. tool result → final response;
-5. достатні context/tool-schema limits;
-6. контрольована поведінка при 429/quota;
-7. відсутність автоматичного paid fallback;
-8. придатність для постійного персонального агента за умовами сервісу.
+Підстави до live test:
+
+- Free план має окрему щоденну безкоштовну allocation і не переходить автоматично на paid usage; після вичерпання free limits операції мають завершуватися помилкою.
+- Для text generation на free-compatible models немає Groq-подібного 8K TPM blocker; default rate limit значно вищий за наш персональний workload.
+- Cloudflare заявляє zero-data-retention для standard inference та no training on Customer Content.
+- У pinned Hermes `v0.22.5` офіційний plugin catalog містить `cloudflare-workers-ai-provider`, pinned на `f6821d058d504ee6324b0d3217564b93124c09f9`, сумісний з Hermes >=0.21.5.
+- Plugin лише реєструє provider/metadata, не додає tools/hooks/background processes; підтримує function-calling models, коректні context windows і free-plan entitlement errors.
+- Перший model candidate: `@cf/zai-org/glm-4.7-flash` — Free-compatible, multilingual, function calling, multi-turn tool calling, context 131072; обраний для першого тесту через низьку neuron-вартість серед придатних моделей.
+
+Production-рішення приймається тільки після одного мінімального реального test на акаунті користувача.
+
+Критерії кваліфікації:
+
+1. Workers Free без payment method/Workers Paid/AI Gateway credits;
+2. успішна авторизація dedicated token;
+3. `@cf/zai-org/glm-4.7-flash` реально доступний на Free;
+4. українська відповідь;
+5. реальний Hermes tool call → tool result → final response;
+6. фактичний neuron usage після мінімального test;
+7. контрольована відмова при вичерпанні квоти без paid fallback;
+8. OpenAI/Codex route відключений і не використовується.
 
 ### 6.6 Exa
 
@@ -225,25 +249,28 @@ Provisioned host / L-002:
 
 ## 7. Наступний активний gate
 
-### Provider qualification
+### L-004C — Cloudflare Workers AI Free qualification
 
 **PLANNED / READY TO START у Локальному Codex.**
 
-Мета: на вже перевіреному Oracle ARM64 host і незмінному pinned Hermes runtime виконати один мінімальний реальний agent/tool-loop test для придатного безкоштовного candidate provider і зафіксувати фактичну usage/quota поведінку.
+Мета: на незмінному Oracle ARM64 + pinned Hermes runtime виконати один мінімальний реальний test Cloudflare Workers AI Free з `@cf/zai-org/glm-4.7-flash`, достатній для підтвердження account entitlement, реального Hermes tool-loop і фактичної neuron-витрати.
 
-Перший кандидат для перевірки — штатний Hermes `openai-codex`, але тільки якщо реальний OAuth flow доступний і не вимагає окремого платного API-балансу або automatic credit spending.
+Перед тестом:
 
-Ключові вимоги:
+- прибрати/відключити `openai-codex` credential на Oracle штатним Hermes auth flow, щоб production route не міг випадково споживати Codex development allowance;
+- видалити `l004a-work/` після secret check; task-local scratch не комітити;
+- не змінювати Hermes pin, quota patch, Docker sandbox, Oracle network або systemd;
+- встановити тільки pinned Cloudflare provider із official Hermes plugin catalog;
+- не вмикати Workers Paid, payment method, prepaid AI Gateway credits, unified billing або будь-який fallback.
 
-- не змінювати Hermes pin, quota patch або Docker sandbox;
-- не підключати кілька provider-ів одночасно;
-- не вмикати paid fallback або auto-recharge;
-- виконати один український turn і один реальний Hermes tool call;
-- перевірити tool result → final answer;
-- зафіксувати фактичну usage/quota поведінку;
-- при непридатності кандидата зупинитися і перейти до наступного окремим контрольованим тестом.
+Test scope:
 
-**Cloud Codex не потрібен на старті provider qualification.** Залучати його лише при конкретному кодовому/runtime блокері.
+- один короткий український turn;
+- один контрольований Hermes-native tool-loop у sandbox;
+- один BEFORE/AFTER neuron usage check;
+- після цього STOP.
+
+**Cloud Codex не потрібен на старті L-004C.** Залучати лише при конкретному code/runtime blocker.
 
 ## 8. Наступні gates після provider qualification
 
@@ -268,14 +295,18 @@ Provisioned host / L-002:
 - **D-009:** Hermes pin `v0.22.5` не змінювати без окремого upgrade-рішення і regression.
 - **D-010:** Exa — цільовий web search; keyless fallback вимкнений.
 - **D-011:** SSH до Oracle лишається обмеженим погодженим `/32`; не розширювати до `0.0.0.0/0` без конкретної потреби й review.
-- **D-012:** `l003-work/` та аналогічні task-local orchestration/scratch файли не є product source і не комітяться в `main`; після фіксації sanitized evidence їх можна видалити локально.
+- **D-012:** `l*-work/` та аналогічні task-local orchestration/scratch файли не є product source і не комітяться в `main`; після фіксації sanitized evidence їх можна видалити локально.
+- **D-013:** ChatGPT/Codex subscription route технічно перевірений, але виключений із production; allowance резервується для розробницьких Codex.
+- **D-014:** Groq Free не тестувати: documented TPM limits несумісні з типовим Hermes agent/tool request.
+- **D-015:** Cloudflare Workers AI Free — наступний контрольований production-candidate test; `@cf/zai-org/glm-4.7-flash` — перша модель для кваліфікації, але не production-рішення до PASS.
 
 ## 10. Що НЕ можна вважати підтвердженим
 
 Не перетворювати на факт:
 
-- придатність Gemini Free для 24/7 Hermes до реальних agent-turn tests;
-- придатність ChatGPT/Codex subscription як production route до реального Hermes OAuth + usage test;
+- придатність Cloudflare Workers AI Free для нашого production до L-004C real account/tool-loop/neuron test;
+- фактичну кількість Hermes turns/day лише з теоретичного neuron розрахунку;
+- придатність Gemini Free для 24/7 Hermes без окремої причини повертатися до його practical test;
 - працездатність Telegram лише з факту існування BotFather bot-а;
 - production-ready статус лише з runtime/sandbox tests;
 - безкоштовність сервісу лише через signup credits або trial balance.
@@ -289,6 +320,7 @@ Provisioned host / L-002:
 - [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md) — sanitized Local Codex control-plane findings.
 - [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md) — sanitized proof of the provisioned Oracle A1 host, SSH and network checks.
 - [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md) — sanitized proof of native pinned Hermes runtime and Docker sandbox on Oracle ARM64.
+- [`docs/L004A-OPENAI-CODEX-QUALIFICATION.uk.md`](docs/L004A-OPENAI-CODEX-QUALIFICATION.uk.md) — sanitized proof that `openai-codex` works technically but is excluded from production.
 - [`config/upstream.json`](config/upstream.json) — pinned Hermes upstream metadata; current provider decision is governed by this file's pin fields plus `PROJECT_STATE.md`, not by historical model notes.
 - [`reports/c001-recovery.json`](reports/c001-recovery.json) — recovery evidence.
 
