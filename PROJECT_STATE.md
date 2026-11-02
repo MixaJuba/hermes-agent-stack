@@ -5,9 +5,10 @@
 
 Оновлено: **2 листопада 2026 року**.
 
-Прийнятий implementation C-002: `02567a3cad56dcb9d1b3140b682076d1e2a5f2cf`.
+Прийнятий implementation C-002A: `f0f8a41857aa9b2c647638ee070900b529e11e19`.
+Історичний C-002 implementation: `02567a3cad56dcb9d1b3140b682076d1e2a5f2cf`.
 Історичний C-001 checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
-Документаційні коміти після нього можуть змінювати HEAD `main`, але не повинні змінювати перевірену реалізацію без окремого технічного етапу.
+Документаційні коміти після implementation checkpoint можуть змінювати HEAD `main`, але не повинні змінювати перевірену реалізацію без окремого технічного етапу.
 
 ## 1. Статуси
 
@@ -43,7 +44,7 @@
 - Telegram — штатний Hermes gateway, long polling, один production poller.
 - NVIDIA Build/NIM — **TEST ONLY**.
 - Hermes pinned на `v0.22.5` / `bf0203a794a07aac3ff764972ab9087baa4e4f4e` до окремого upgrade-рішення.
-- Exa — цільовий web-search provider; keyless fallback/rescue мають бути вимкнені.
+- Exa — єдиний production web-search/content-extraction provider; keyless fallback/rescue вимкнені.
 
 ## 4. Цільова production-архітектура
 
@@ -55,7 +56,7 @@ Hermes Gateway
 Hermes Agent
    ├── Cloudflare Workers AI Free / workers-ai / @cf/zai-org/glm-4.7-flash
    ├── persistent conversation + memory
-   ├── Exa web search
+   ├── Exa keyed web search/extract
    └── isolated Docker tool environment
 
 Host: Oracle Always Free A1 ARM64.
@@ -83,13 +84,13 @@ Source of truth: GitHub repository MixaJuba/hermes-agent-stack.
 
 ### 6.1 Cloud implementation checkpoint — CONFIRMED
 
-- implementation checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`;
+- implementation checkpoint C-002A: `f0f8a41857aa9b2c647638ee070900b529e11e19`;
 - Hermes source: `v0.22.5`, commit `bf0203a794a07aac3ff764972ab9087baa4e4f4e`;
 - quota-profile patch відновлено й перевірено;
 - synthetic 402/429: PASS;
 - український quota text: PASS;
-- одна дозволена спроба, без HTTP/model/paid fallback;
-- full project regression на C-001: **20 PASS**;
+- bounded retry, без model/provider/paid fallback;
+- C-002A full regression: **29 PASS**;
 - secret scan: PASS;
 - ARM64 artifacts / Docker base image manifest підтверджені.
 
@@ -106,7 +107,8 @@ Source of truth: GitHub repository MixaJuba/hermes-agent-stack.
 - PM install / managed Python 3.14.9 / Hermes CLI v0.22.5: PASS;
 - Docker 29.1.3 ARM64;
 - `hermes-ua-sandbox:local`: build + native smoke PASS;
-- sandbox: non-root, `network=none`, без Docker socket, host checkout, secrets і published ports.
+- sandbox: non-root, `network=none`, без Docker socket, host checkout, secrets і published ports;
+- C-002A delta синхронізований на Oracle, real Cloudflare plugin attestation: PASS.
 
 ### 6.3 L-004A openai-codex — CONFIRMED TECHNICALLY / REJECTED FOR PRODUCTION
 
@@ -130,21 +132,17 @@ Production inference route обраний після реального test:
 - Ukrainian turn: PASS;
 - real Hermes-native model → terminal tool → sandbox → tool result → final response: PASS;
 - контрольний результат: `HERMES_CF_OK`;
-- два реальні terminal tool calls;
 - sandbox security invariants збережено;
 - model fallback: NONE;
 - paid fallback: NONE;
 - OpenAI/Codex, Gemini, Groq, NVIDIA не використовувалися;
-- input tokens: 19 004 total;
-- output tokens: 847 total;
-- точний Dashboard Neuron counter не був доступний, тому фактичний `NEURON_DELTA` = UNKNOWN; теоретичні розрахунки не видавати за виміряний account fact.
+- точний Dashboard Neuron counter не був доступний; фактичний `NEURON_DELTA` не заявляється.
 
-**Production decision:** Cloudflare Workers AI Free + `workers-ai` + `@cf/zai-org/glm-4.7-flash` прийнято як production inference route для поточного pinned deployment.
+**Production decision:** Cloudflare Workers AI Free + `workers-ai` + `@cf/zai-org/glm-4.7-flash` — production inference route для поточного pinned deployment.
 
 Будь-який майбутній upgrade Hermes або Cloudflare plugin потребує окремої requalification.
 
-Доказ: [`docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md`](docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md).
-Sanitized closeout і token/Neuron accounting: [L004C-CLOSEOUT](docs/L004C-CLOSEOUT.uk.md), [machine evidence](reports/l004c-qualified.json).
+Докази: [`docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md`](docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md), [`docs/L004C-CLOSEOUT.uk.md`](docs/L004C-CLOSEOUT.uk.md), [`reports/l004c-qualified.json`](reports/l004c-qualified.json).
 
 ### 6.5 Telegram — OBSERVED / НЕ ПІДКЛЮЧЕНО
 
@@ -154,65 +152,67 @@ Sanitized closeout і token/Neuron accounting: [L004C-CLOSEOUT](docs/L004C-CLOSE
 - owner numeric ID ще не підтверджений production E2E;
 - webhook/polling state ще не перевірений live.
 
-### 6.6 Exa / L-005 — PAUSED AT GATE 2
+### 6.6 Exa / L-005 — CONFIRMED / PASS
 
-- Exa залишається цільовим web-search provider;
-- account/key і реальна безкоштовна quota конкретного користувача ще не кваліфіковані;
-- live search із фактичними URL ще не виконаний;
-- keyless fallback/rescue повинні залишатися OFF.
+- account: ACTIVE;
+- plan: FREE; dashboard показав `$10 credits/month`;
+- payment method: ABSENT;
+- PAYGO: NO;
+- paid subscription: NO;
+- balance before controlled test: `$20.00`;
+- створено один dedicated key `hermes-agent-prod`; UI не надав scopes;
+- `EXA_API_KEY` встановлено тільки у protected Oracle `.env`; owner `hermes-agent`, mode `0600`;
+- existing Cloudflare variables збережені;
+- dependency: `exa-py==2.10.2`, уже була встановлена, без reinstall;
+- web routing: `backend=exa`, `search_backend=exa`, `extract_backend=exa`;
+- keyless fallback/rescue: OFF;
+- один real keyed Exa `web_search`: PASS, три source URLs;
+- один real keyed Exa `web_extract`: PASS, content отримано;
+- інший web provider не використовувався;
+- balance after: `$19.99`; точний call cost не заявляти через UI rounding/reporting;
+- secret scan: PASS; task-local exact-key scan — 0 збігів;
+- paid route: NONE.
 
-За повідомленням Local Codex: accepted main перевірено, усі 54 tracked C-002
-files синхронізовано на Oracle без зміни `.env`/`config.yaml`; `l004c-work/`
-перевірено й видалено локально після secret scan. Gate 2 зупинився на expected
-installer sidecar `.hermes-catalog.json`, не на source/provenance mismatch.
-**Exa account/key/API дій ще не було. `l005-work` state зберігається.**
+Докази: [`docs/L005-EXA-QUALIFICATION.uk.md`](docs/L005-EXA-QUALIFICATION.uk.md), [`reports/l005-exa-qualified.json`](reports/l005-exa-qualified.json).
+
+### 6.7 C-002 / C-002A productionization — ACCEPTED
+
+- tracked production route: `workers-ai / @cf/zai-org/glm-4.7-flash`;
+- NVIDIA прибрано з production required secrets і main/auxiliary config; TEST ONLY history збережена;
+- main/auxiliary fallback chains порожні;
+- exact community plugin commit + source hashes + installer-owned provenance attestation;
+- `.hermes-catalog.json` дозволений лише як inert installer sidecar і не використовується як provenance;
+- startup guard fail-closed для inference/web/Telegram/sandbox/retry policy;
+- synthetic Cloudflare 429: bounded, без provider/model/paid switch;
+- full regression після C-002A: 29 PASS.
 
 ## 7. Поточний активний gate
 
-### C-002A — catalog-sidecar attestation correction
+### L-006F — final production activation, Local Codex
 
-**OFFLINE CONFIRMED/PASS; очікує coordinator acceptance та Local Oracle re-attestation.**
+**PLANNED.**
 
-- Exact pinned Hermes сам створює in-tree `.hermes-catalog.json`; C-002 allowlist/fixture помилково вважали його зайвим.
-- Підтверджені source hashes та installer-owned revision/source/pinned не змінилися; ознак plugin compromise за Local діагностикою немає.
-- Fix дозволяє тільки expected regular JSON sidecar із правильними catalog_name/repo/sha/tier та optional normal-string installed_at; symlink/malformed/unknown fields/extras відхиляються.
-- Єдине authoritative provenance джерело — `plugins/.install-metadata.json`; sidecar не замінює metadata або три SHA256 checks.
-- Narrow: 7 attestation + 10 guard PASS; full regression: **29 PASS**, один запуск після narrow PASS.
-- Hermes/plugin pins та production route незмінні. Exa/Telegram/systemd/Oracle не використовувалися.
-- **Live Oracle re-attestation PASS ще не підтверджений.**
+Щоб не створювати зайві handoff-и, завершальні етапи виконуються одним Local Codex task із внутрішніми gates. Перехід до наступної фази дозволений лише після PASS попередньої; при новому blocker Local Codex STOP і повертає точну причину.
 
-Доказ: [C-002A](docs/C002A-CATALOG-SIDECAR.uk.md), [`reports/c002a-closeout.json`](reports/c002a-closeout.json).
+Послідовність:
 
-Після прийняття fix Local Codex має **RESUME L-005 FROM GATE 2** з наявним `l005-work`,
-не повторюючи завершену Phase 1 або Oracle stack sync без нової причини.
+1. Telegram production integration: secure bot token, confirmed numeric owner ID, webhook/polling check, native long polling, рівно один poller, owner-only policy, foreign-ID denial test.
+2. Production config + startup guard PASS, після чого один manual gateway smoke через Telegram.
+3. systemd install/enable; process restart і VM reboot; gateway автоматично повертається без другого poller.
+4. Три послідовні Telegram turns із context continuity.
+5. Long-term memory fact записується та відтворюється після restart/reboot.
+6. Real Hermes tool task через Telegram із збереженням sandbox invariants.
+7. Real Exa search через Telegram із фактичними source URLs.
+8. Real backup/restore на target VM у безкоштовному storage path; перевірка permissions та memory/history recovery.
+9. Final E2E: owner-only, Ukrainian response, Cloudflare+Exa routes, reboot recovery, quota-message path, secret isolation, zero paid fallback.
 
-### C-002 — Cloudflare productionization + deployment reproducibility
+## 8. Залишкові gates
 
-**ACCEPTED / implementation PASS на `02567a3cad56dcb9d1b3140b682076d1e2a5f2cf`; в іншому чинний, attestation false positive виправляє C-002A.**
-
-- Tracked production route: `workers-ai / @cf/zai-org/glm-4.7-flash`, account URL/token тільки із protected environment.
-- NVIDIA прибрано з production required secrets і main/auxiliary config; TEST ONLY history збережена.
-- Main fallback model/provider та всі auxiliary fallback chains порожні; plugin default auxiliary model перекрито explicit GLM route.
-- 17 auxiliary slots pinned; session_search/web_extract у цій версії не використовують auxiliary LLM.
-- Exact community plugin catalog commit + file hashes/source metadata attestation; auto-update/apply OFF; clean restore helper без unpinned latest.
-- Guard приймає synthetic правильний профіль і відхиляє old NVIDIA/paid або чужі routes, malformed URL, wildcard/foreign access та порушення sandbox/keyless/retry policy.
-- Native synthetic Cloudflare Free 429: PASS, main одна спроба; auxiliary bounded дві спроби на ідентичному Free route (один native same-provider recovery retry). HTTP/fallback/provider/model switch = 0.
-- Narrow deployment/guard/plugin/schema/native routing/quota checks PASS; full project regression **24 PASS**, один запуск після narrow PASS.
-- Cloudflare/Oracle/Telegram/Exa live tests не повторювалися; deployment на Oracle не виконано, gateway не запускався.
-
-Докази: [C-002](docs/C002-CLOUDFLARE-PRODUCTION.uk.md),
-[`reports/c002-native-check.json`](reports/c002-native-check.json).
-
-**L-005 уже розпочато; поточний бар’єр — C-002A acceptance та повторна attestation у Gate 2, не початок L-005 заново.**
-
-## 8. Наступні gates після C-002
-
-1. **L-005 Exa integration — Local Codex**: після C-002A acceptance RESUME FROM GATE 2 з preserved `l005-work`; не повторювати Phase 1/stack sync. Лише після attestation PASS — account/free quota, secure key, one real search із фактичними source URLs, no paid fallback.
-2. **L-006 Telegram integration — Local Codex**: secure bot token + confirmed numeric owner ID, webhook check, native long polling, one poller, owner-only access, outsider denied.
-3. **L-007 systemd + persistence — Local Codex**: install/enable service, process restart, reboot autostart, 3-message context, memory persistence, no second poller.
-4. **L-008 backup/restore — Local Codex**: real target VM backup/restore, permissions, memory/history recovery, 0 грн storage path.
-5. **L-009 final E2E acceptance — Local Codex**: Telegram Ukrainian response, 3-turn context, long-term memory after restart, real tool task, Exa sources, owner-only access, reboot recovery, quota failure behavior, secret isolation, zero paid routes.
-6. **Coordinator final acceptance**: review evidence, update `PROJECT_STATE.md`, README і final production status.
+- **L-006 Telegram** — ще не виконано live.
+- **L-007 systemd + persistence** — ще не виконано live.
+- **L-008 backup/restore** — ще не виконано real target restore.
+- **L-009 final E2E** — ще не виконано.
+- **Coordinator final acceptance** — після sanitized evidence L-006F оновити `PROJECT_STATE.md`, README і production status.
 
 ## 9. Прийняті технічні рішення
 
@@ -220,22 +220,22 @@ installer sidecar `.hermes-catalog.json`, не на source/provenance mismatch.
 - **D-002:** GitHub `main` = accepted state; handoff через SHA.
 - **D-003:** Oracle Always Free A1 = production host.
 - **D-004:** NVIDIA = TEST ONLY.
-- **D-005:** provider не призначався до live qualification; після L-004C provider decision закритий.
+- **D-005:** Cloudflare Workers AI Free / `workers-ai` / `@cf/zai-org/glm-4.7-flash` = production inference route.
 - **D-006:** zero paid fallback / auto-recharge / hidden paid route.
 - **D-007:** Telegram native gateway, long polling, one poller; voice/Telethon поза scope.
 - **D-008:** secrets не передавати через chat/Git/logs; тільки protected target environment.
 - **D-009:** Hermes pin `v0.22.5` не змінювати без upgrade decision + regression.
-- **D-010:** Exa = цільовий web search; keyless fallback/rescue OFF.
+- **D-010:** Exa keyed = production web search/extract; keyless fallback/rescue OFF.
 - **D-011:** Oracle SSH ingress лишається погодженим `/32`.
-- **D-012:** `l*-work/` task-local scratch не є product source, не комітиться; після sanitized evidence і прийняття наступного milestone може бути видалений локально після secret check.
+- **D-012:** `l*-work/` task-local scratch не є product source і не комітиться; після sanitized evidence + acceptance може бути видалений після secret scan.
 - **D-013:** `openai-codex` технічно кваліфікований, але виключений із production; Codex allowance резервується для development.
-- **D-014:** Groq Free не тестувати без нової причини: documented TPM не відповідає типовому Hermes agent/tool request.
-- **D-015:** Cloudflare Workers AI Free + `workers-ai` + `@cf/zai-org/glm-4.7-flash` = selected production inference route для поточного pinned deployment.
-- **D-016:** Cloudflare provider plugin = community integration pinned exact commit; upgrade Hermes/plugin => mandatory requalification before production.
+- **D-014:** Groq Free не тестувати без нової причини.
+- **D-015:** Cloudflare provider plugin = community integration pinned exact commit; upgrade Hermes/plugin => mandatory requalification.
+- **D-016:** C-002A sidecar policy: installer-owned `.install-metadata.json` є authoritative provenance; in-tree `.hermes-catalog.json` — лише validated inert sidecar.
+- **D-017:** Exa Free qualification L-005 прийнята; зміна plan/dependency/web implementation потребує requalification перед policy change.
 
 ## 10. Що ще НЕ підтверджено
 
-- production Exa account/quota/search;
 - Telegram live delivery та owner-only denial;
 - 3-turn Telegram context;
 - long-term memory persistence після restart/reboot;
@@ -248,12 +248,13 @@ installer sidecar `.hermes-catalog.json`, не на source/provenance mismatch.
 
 ## 11. Evidence map
 
-- [`docs/C002A-CATALOG-SIDECAR.uk.md`](docs/C002A-CATALOG-SIDECAR.uk.md) — corrective policy, native installer fixture та L-005 resume point.
-
-- [`docs/C002-CLOUDFLARE-PRODUCTION.uk.md`](docs/C002-CLOUDFLARE-PRODUCTION.uk.md) — поточні production artifacts і offline proofs.
-- [`docs/L004C-CLOSEOUT.uk.md`](docs/L004C-CLOSEOUT.uk.md) — sanitized closeout без секретів.
-
-- [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md) — quota patch recovery + 20 PASS.
+- [`docs/L005-EXA-QUALIFICATION.uk.md`](docs/L005-EXA-QUALIFICATION.uk.md) — Exa Free account/key/native Hermes search+extract qualification.
+- [`reports/l005-exa-qualified.json`](reports/l005-exa-qualified.json) — sanitized machine-readable L-005 evidence.
+- [`docs/C002A-CATALOG-SIDECAR.uk.md`](docs/C002A-CATALOG-SIDECAR.uk.md) — corrective attestation policy.
+- [`reports/c002a-closeout.json`](reports/c002a-closeout.json) — C-002A machine evidence.
+- [`docs/C002-CLOUDFLARE-PRODUCTION.uk.md`](docs/C002-CLOUDFLARE-PRODUCTION.uk.md) — Cloudflare production artifacts/offline proofs.
+- [`docs/L004C-CLOSEOUT.uk.md`](docs/L004C-CLOSEOUT.uk.md) — Cloudflare sanitized closeout.
+- [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md) — quota patch recovery.
 - [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md) — historical cloud runtime/deployment snapshot.
 - [`docs/BACKUP-QUOTA.uk.md`](docs/BACKUP-QUOTA.uk.md) — synthetic backup/restore та quota simulations.
 - [`docs/QUOTA-PATCH.uk.md`](docs/QUOTA-PATCH.uk.md) — quota overlay rationale.
@@ -261,9 +262,8 @@ installer sidecar `.hermes-catalog.json`, не на source/provenance mismatch.
 - [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md) — provisioned Oracle A1 host evidence.
 - [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md) — pinned Hermes runtime + Docker sandbox on Oracle.
 - [`docs/L004A-OPENAI-CODEX-QUALIFICATION.uk.md`](docs/L004A-OPENAI-CODEX-QUALIFICATION.uk.md) — openai-codex technical qualification / production rejection.
-- [`docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md`](docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md) — Cloudflare Workers AI Free real qualification PASS.
+- [`docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md`](docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md) — Cloudflare live qualification.
 - [`config/upstream.json`](config/upstream.json) — pinned Hermes upstream metadata.
-- [`reports/c001-recovery.json`](reports/c001-recovery.json) — C-001 recovery evidence.
 
 ## 12. Правило оновлення цього файлу
 
