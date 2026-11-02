@@ -23,3 +23,5 @@ runtime/
 *.tfstate*
 *.tfvars
 
+# Local Codex task orchestration/scratch files are not project source.
+l003-work/
