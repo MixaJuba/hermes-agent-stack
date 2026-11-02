@@ -69,7 +69,8 @@ Local Codex; правило не повинне автоматично матч�
    контрольованого recovery Local видаляє temporary copy. Постійне зберігання
    private identity на Oracle не передбачається й не дозволене.
 6. Заповнити private non-secret settings за `config/offsite-backup.example.json`
-   і розмістити `/etc/hermes-offsite.json`; непотрібні/credential поля заборонені.
+   і розмістити `/etc/hermes-offsite.json`; explicit hermes_source/hermes_tools
+   вказують на вже встановлений Oracle PM runtime (не Cloud /workspace defaults); непотрібні/credential поля заборонені.
    Запуск від `hermes-agent` з service prerequisites та існуючим PM runtime:
 
 ```bash

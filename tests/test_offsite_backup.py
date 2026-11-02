@@ -36,14 +36,14 @@ class OffsiteTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='h001-test-'); self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name)
-        self.c=dict(recipient=recipient(),namespace='synthetic',bucket='synthetic',region='eu-frankfurt-1',prefix='hermes-backups',home=str(self.root/'home'),local_dir=str(self.root/'backups'),restore_root=str(self.root/'restores'))
+        self.c=dict(recipient=recipient(),namespace='synthetic',bucket='synthetic',region='eu-frankfurt-1',prefix='hermes-backups',home=str(self.root/'home'),local_dir=str(self.root/'backups'),restore_root=str(self.root/'restores'),hermes_source=str(self.root/'source'),hermes_tools=str(self.root/'tools'))
         (self.root/'home').mkdir()
         self.calls=[]; self.upload=None
         self.env=patch.dict(os.environ,{},clear=True); self.env.start(); self.addCleanup(self.env.stop)
         self.trip=patch.object(socket.socket,'connect',side_effect=AssertionError('external network forbidden')); self.trip.start(); self.addCleanup(self.trip.stop)
         self.which=patch.object(b.shutil,'which',return_value='/stub/tool'); self.which.start(); self.addCleanup(self.which.stop)
 
-    def native(self,action,home,archive):
+    def native(self,c,action,home,archive):
         self.assertEqual(action,'backup'); archive.write_bytes(b'synthetic raw'); archive.chmod(0o600)
 
     def age(self,args,**kw):

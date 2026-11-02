@@ -6,5 +6,7 @@
   "prefix": "hermes-backups",
   "home": "/var/lib/hermes-agent",
   "local_dir": "/var/lib/hermes-agent/backups/offsite",
-  "restore_root": "/var/lib/hermes-dr-restores"
+  "restore_root": "/var/lib/hermes-dr-restores",
+  "hermes_source": "/opt/hermes-agent",
+  "hermes_tools": "/var/lib/hermes-agent/tools"
 }

@@ -8,7 +8,7 @@
   "production_guard_tests": 10,
   "production_config_tests": 7,
   "full_regression_tests": 39,
-  "full_regression_runs": 1,
+  "full_regression_runs": 2,
   "secret_scan": "PASS",
   "age_and_oci": "stubbed offline; actual tools/cryptography/API not yet qualified",
   "oci_auth": "instance_principal only; static env rejected; config file /dev/null",
@@ -19,5 +19,6 @@
   "lifecycle_delete": "NONE",
   "network_used": false,
   "github_network": "sync and branch push only",
-  "production_runtime_changed": false
+  "production_runtime_changed": false,
+  "regression_repeat_reason": "Relevant deployment-path fix after first PASS: explicit non-secret Oracle source/tools paths, avoiding Cloud defaults"
 }

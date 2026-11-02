@@ -46,7 +46,7 @@ def restore(c, target, identity, name, expected_sha):
         run(['age','--decrypt','--identity',str(key),'--output',str(raw),str(encrypted)])
         target.mkdir(mode=0o700,exist_ok=True)
         target.chmod(0o700)
-        native('restore',target,raw)
+        native(c,'restore',target,raw)
     return {'status':'isolated native restore verified'}
 
 

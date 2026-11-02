@@ -35,13 +35,13 @@ def recipient_valid(value):
 
 def load_config(path):
     c = json.loads(Path(path).read_text())
-    keys = {'recipient', 'namespace', 'bucket', 'region', 'prefix', 'home', 'local_dir', 'restore_root'}
+    keys = {'recipient', 'namespace', 'bucket', 'region', 'prefix', 'home', 'local_dir', 'restore_root', 'hermes_source', 'hermes_tools'}
     if set(c) != keys or not recipient_valid(c['recipient']):
         raise ValueError('Invalid non-secret config or age recipient')
     for key in ('namespace', 'bucket', 'region', 'prefix'):
         if not isinstance(c[key], str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', c[key]) or c[key].startswith('REPLACE'):
             raise ValueError('Missing/invalid storage setting')
-    for key in ('home', 'local_dir', 'restore_root'):
+    for key in ('home', 'local_dir', 'restore_root', 'hermes_source', 'hermes_tools'):
         p = Path(c[key])
         if not p.is_absolute() or p.resolve() != p or str(p) == '/':
             raise ValueError('Paths must be absolute, canonical, and not symlinked')
@@ -81,8 +81,9 @@ def digest(path):
     return h.hexdigest()
 
 
-def native(action, home, archive):
-    return run(['python3', str(ROOT/'scripts/hermes_runtime.py'), 'python', '--',
+def native(c, action, home, archive):
+    return run(['python3', str(ROOT/'scripts/hermes_runtime.py'),
+                '--source', c['hermes_source'], '--home', c['home'], '--tools', c['hermes_tools'], 'python', '--',
                 str(ROOT/'scripts/offsite_native.py'), action, str(home), str(archive)])
 
 
@@ -109,7 +110,7 @@ def backup(c):
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     name = stamp + '-' + uuid.uuid4().hex
     raw, encrypted = directory/(name+'.zip'), directory/(name+'.zip.age')
-    native('backup', Path(c['home']), raw)
+    native(c, 'backup', Path(c['home']), raw)
     if not raw.is_file() or raw.is_symlink() or raw.stat().st_mode & 0o077:
         raise ValueError('Native backup missing or unsafe permissions')
     run(['age', '--encrypt', '--recipient', c['recipient'], '--output', str(encrypted), str(raw)])
