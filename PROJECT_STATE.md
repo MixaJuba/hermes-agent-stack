@@ -1,18 +1,21 @@
 # hermes-agent-stack — канонічний стан проєкту
 
-> Єдине джерело правди про поточний production-стан, прийняті рішення та подальші правила експлуатації.
+> Єдине джерело правди про поточний production-стан, прийняті рішення, межі доказу та правила наступних змін.
 
 Оновлено: **2 листопада 2026 року**.
 
 ## 1. Загальний статус
 
-**PRODUCTION READY / FINAL E2E PASS.**
+**LIVE PRODUCTION BASELINE ACCEPTED / FINAL E2E PASS.**
 
-Фінальний Local Codex task `L-006F` завершив production-активацію й перевірив Telegram, systemd, reboot persistence, long-term memory, real Hermes tool call, real Exa search, owner-only policy, quota-message delivery, real backup/restore та zero-paid-fallback policy.
+`L-006F` завершив production-активацію й live E2E на Oracle. Підтверджені Telegram, systemd, reboot persistence, long-term memory, real Hermes terminal tool, real keyed Exa search, owner-only policy, quota-message transport, real backup/restore та zero-paid-fallback policy.
+
+Це прийнята опорна точка, а не дозвіл безконтрольно змінювати систему. Подальша робота ведеться від цього baseline так, щоб не зламати вже працюючий Telegram-агент.
 
 Sanitized evidence:
 - [`docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md`](docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md)
 - [`reports/l006f-production-ready.json`](reports/l006f-production-ready.json)
+- [`docs/OPERATIONS-RUNBOOK.uk.md`](docs/OPERATIONS-RUNBOOK.uk.md)
 
 ## 2. Production-архітектура
 
@@ -41,49 +44,55 @@ Source of truth: GitHub MixaJuba/hermes-agent-stack
 - Production web: keyed Exa only.
 - Exa dependency: `exa-py==2.10.2`.
 - Oracle VM: `VM.Standard.A1.Flex`, 1 OCPU / 6 GB RAM, ARM64, Ubuntu 24.04.5 Minimal, 50 GB boot volume.
-- Docker: ARM64 sandbox, `network=none`, non-root, без Docker socket, host checkout, forwarded secrets або published ports.
+- Docker sandbox: `network=none`, non-root, без Docker socket, host checkout, forwarded secrets або published ports.
 
-Будь-яка зміна Hermes pin, Cloudflare plugin pin, production model/provider, Exa dependency/plan/web implementation або Telegram authorization model потребує окремої requalification перед production rollout.
+Будь-яка зміна Hermes pin, Cloudflare plugin pin, production model/provider, Exa dependency/plan/web implementation, Telegram authorization model, backup/restore format або production host architecture потребує окремого qualification gate перед rollout.
 
-## 4. Фінально підтверджений runtime
+## 4. Фінально підтверджений live runtime
 
 ### Telegram — CONFIRMED / PASS
 
 - bot: `@mixa_hermes_ua_bot`;
+- identity підтверджена через Bot API;
 - webhook: NONE;
 - native long polling;
 - рівно один production poller;
-- numeric owner ID confirmed;
+- numeric owner ID підтверджений зі свіжого private update;
 - owner-only access;
-- foreign numeric ID denied через native authorization path;
+- foreign numeric ID denied через native authorization path до inference;
 - group access denied;
 - українська відповідь: PASS;
-- three-turn context continuity: PASS.
+- manual gateway smoke: `HERMES_TELEGRAM_OK`;
+- three-turn context continuity: `4817 → 4817 → 4822`, PASS.
 
-Telegram token і owner configuration зберігаються тільки у protected Oracle environment; numeric owner ID і token не комітяться в Git.
+Telegram token і owner configuration зберігаються тільки у protected Oracle environment; token і numeric owner ID не комітяться в Git.
 
 ### systemd / reboot — CONFIRMED / PASS
 
-- `hermes-ua.service` enabled;
-- service active;
+- accepted `hermes-ua.service` installed;
+- service enabled + active;
 - startup guard PASS;
-- manual gateway smoke PASS до systemd activation;
+- temporary manual gateway зупинено до systemd activation;
 - VM reboot PASS;
-- gateway автоматично повертається після reboot;
+- Docker і gateway автоматично повернулися після reboot;
+- Cloudflare plugin attestation після reboot PASS;
+- poller count після restart/reboot: 1;
 - другого poller не створено.
 
 ### Memory — CONFIRMED / PASS
 
-- long-term memory write PASS;
-- memory after service restart PASS;
-- memory after real VM reboot PASS;
-- restore memory PASS.
+- long-term memory write через native memory tool: PASS;
+- memory after service restart: PASS;
+- memory after real VM reboot: PASS;
+- restore memory: PASS.
 
 ### Hermes tools / sandbox — CONFIRMED / PASS
 
 - real Hermes terminal tool через Telegram: PASS;
-- контрольний результат: `HERMES_FINAL_OK`;
-- sandbox security invariants після live tool execution: PASS.
+- контрольний stdout/result: `HERMES_FINAL_OK`;
+- exit code: 0;
+- test file після task видалено;
+- sandbox live invariants: `network=none`, non-root, без keys, Docker socket і host checkout.
 
 ### Cloudflare — CONFIRMED / PASS
 
@@ -99,7 +108,7 @@ Telegram token і owner configuration зберігаються тільки у p
 - account qualified FREE;
 - payment method absent;
 - PAYGO disabled;
-- dedicated production key встановлено тільки в protected Oracle `.env`;
+- dedicated production key тільки в protected Oracle `.env`;
 - backend/search/extract = Exa;
 - keyless fallback/rescue OFF;
 - real keyed Exa search через Telegram: PASS;
@@ -109,14 +118,19 @@ Telegram token і owner configuration зберігаються тільки у p
 
 - real production backup: PASS;
 - location: private Oracle boot volume;
+- фактичний backup: 419 files, приблизно 1.9 MB;
 - backup directory mode `0700`;
 - archive owner `hermes-agent`, mode `0600`;
-- real restore у separate isolated home: PASS;
+- real native restore у separate isolated home: PASS;
 - restored memory: PASS;
 - restored session/history: PASS;
-- другого gateway/poller під час restore не створено.
+- restored config/state: PASS;
+- restore-test home після validation видалено;
+- live production home не перезаписувався;
+- другого gateway/poller під час restore не створено;
+- production backup archive залишено на Oracle.
 
-Примітка: це restore-capable backup на тій самій VM, а не off-site disaster-recovery copy.
+Межа: це restore-capable backup на тій самій VM, а не off-site disaster-recovery copy.
 
 ### Quota behavior — ACCEPTED / PASS
 
@@ -137,7 +151,7 @@ Telegram token і owner configuration зберігаються тільки у p
 - Production `.env`: regular file, owner `hermes-agent`, mode `0600`.
 - Secrets не повинні потрапляти у Git, chat, task artifacts, logs або sandbox.
 - Final task-local secret scan: PASS.
-- Telegram ingress ports не потрібні: production використовує outbound long polling.
+- Telegram inbound ports не потрібні: production використовує outbound long polling.
 
 ## 6. Історичні milestones
 
@@ -150,9 +164,22 @@ Telegram token і owner configuration зберігаються тільки у p
 - C-002: Cloudflare productionization — PASS.
 - C-002A: `.hermes-catalog.json` attestation correction — PASS.
 - L-005: Exa Free production qualification — PASS.
-- L-006F: final production activation + E2E — **PASS / PRODUCTION READY**.
+- L-006F: live production activation + final E2E — **PASS / accepted baseline**.
 
-## 7. Прийняті технічні рішення
+## 7. Поточна фаза — production preservation / hardening
+
+Build-gates для першого production baseline закриті. Проєкт переходить у режим контрольованої експлуатації та hardening.
+
+Пріоритети:
+
+1. **Не ламати accepted baseline.** Жодних upgrade/reinstall/model/provider changes без branch → test → evidence → coordinator acceptance.
+2. **Операційна відтворюваність.** Використовувати [`docs/OPERATIONS-RUNBOOK.uk.md`](docs/OPERATIONS-RUNBOOK.uk.md) для incident/restart/reboot/backup дій.
+3. **Off-site disaster recovery — PLANNED / NOT YET QUALIFIED.** Поточний backup переживає restore на цій VM, але не захищає від повної втрати boot volume/instance. Наступний окремий hardening gate має спочатку перевірити zero-cost encrypted off-site storage та реальний recovery path, не змінюючи live runtime.
+4. **Monitoring — PLANNED.** Якщо додається автоматичний health/alerting mechanism, він має бути zero-cost, не містити secrets і не створювати другий poller.
+
+Ці пункти не скасовують `PRODUCTION_READY`; вони визначають наступний рівень стійкості.
+
+## 8. Прийняті технічні рішення
 
 - GitHub `main` = accepted state.
 - Oracle Always Free A1 = production host.
@@ -163,12 +190,13 @@ Telegram token і owner configuration зберігаються тільки у p
 - NVIDIA = TEST ONLY.
 - Voice/STT/TTS/Telethon = outside current scope.
 - Secrets = target environment only.
-- `l*-work/` = task-local scratch, not product source; після acceptance може бути видалений лише після secret scan.
+- `l*-work/` = task-local scratch, not product source; після acceptance може бути видалений тільки після secret scan.
 
-## 8. Evidence map
+## 9. Evidence map
 
-- [`docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md`](docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md) — final live production acceptance.
-- [`reports/l006f-production-ready.json`](reports/l006f-production-ready.json) — sanitized final machine-readable status.
+- [`docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md`](docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md) — detailed final live acceptance.
+- [`reports/l006f-production-ready.json`](reports/l006f-production-ready.json) — sanitized machine-readable final evidence.
+- [`docs/OPERATIONS-RUNBOOK.uk.md`](docs/OPERATIONS-RUNBOOK.uk.md) — safe production operations / incident rules.
 - [`docs/L005-EXA-QUALIFICATION.uk.md`](docs/L005-EXA-QUALIFICATION.uk.md) / [`reports/l005-exa-qualified.json`](reports/l005-exa-qualified.json) — Exa qualification.
 - [`docs/C002A-CATALOG-SIDECAR.uk.md`](docs/C002A-CATALOG-SIDECAR.uk.md) / [`reports/c002a-closeout.json`](reports/c002a-closeout.json) — Cloudflare plugin attestation correction.
 - [`docs/C002-CLOUDFLARE-PRODUCTION.uk.md`](docs/C002-CLOUDFLARE-PRODUCTION.uk.md) — production config/guard/quota checks.
@@ -178,12 +206,14 @@ Telegram token і owner configuration зберігаються тільки у p
 - [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md) — Oracle host.
 - [`config/upstream.json`](config/upstream.json) — pinned Hermes upstream metadata.
 
-## 9. Наступний режим роботи
+## 10. Правило наступних змін
 
-Активних build-gates більше немає.
+Перед суттєвою production-зміною:
 
-Подальша робота — лише:
-- нормальна експлуатація;
-- перевірка при фактичному incident;
-- planned upgrade через окремий qualification gate;
-- за потреби окремо додати off-site encrypted backup, але це не блокує поточний production-ready status.
+1. визначити один конкретний gate;
+2. перевірити актуальні upstream/provider facts;
+3. створити окрему branch;
+4. виконати offline/synthetic tests там, де це можливо;
+5. live test робити мінімальним і контрольованим;
+6. зібрати sanitized evidence;
+7. тільки після coordinator acceptance переносити зміну в production.
