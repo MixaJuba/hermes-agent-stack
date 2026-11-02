@@ -1,0 +1,22 @@
+{
+  "native_memory_tool": "passed",
+  "native_backup_import": "passed",
+  "restored_in_fresh_process": true,
+  "separate_empty_destination": true,
+  "three_messages_restored": true,
+  "owner_only_permissions": true,
+  "archive_members": [
+    "state.db.fts_rebuild.lock",
+    "state.db",
+    "state.db.quarantine.lock",
+    "SOUL.md",
+    "config.yaml",
+    "memories/MEMORY.md",
+    "memories/MEMORY.md.lock"
+  ],
+  "real_secret_files_in_archive": false,
+  "import_service_activation_intercepted": true,
+  "gateway_started": false,
+  "vm_reboot_test": false,
+  "inference_requests": 0
+}

@@ -1,0 +1,142 @@
+{
+  "native_agent_error_loop": true,
+  "cases": [
+    {
+      "http_status_simulated": 402,
+      "client_attempts": 1,
+      "api_max_retries": 1,
+      "auto_recovery_cycles": 0,
+      "fallback_chain_length": 0,
+      "fallback_checks": 1,
+      "fallback_activated": false,
+      "final_response": "Сервіс повідомив про вичерпання квоти або обмеження доступу. Запит зупинено. Потрібно перевірити безкоштовний ліміт.",
+      "display_language_resolved": "uk",
+      "profile_overlay_enabled": true,
+      "native_agent_final_localized": true,
+      "negative_cases": {
+        "success": "unchanged",
+        "auth": "unchanged",
+        "partial": "unchanged",
+        "usage_window": "unchanged"
+      },
+      "failure_retryable": false,
+      "error_metadata_preserved": true,
+      "billing_block_present": true,
+      "real_profile_plugin_discovered": true,
+      "output_hook_positive_control": true,
+      "native_error_hook_categories": [
+        "billing"
+      ],
+      "output_hook_calls_for_failed_turn": 0,
+      "failure_reason": "billing",
+      "turn_exit_reason": null,
+      "real_network_requests": 0
+    },
+    {
+      "http_status_simulated": 429,
+      "client_attempts": 1,
+      "api_max_retries": 1,
+      "auto_recovery_cycles": 0,
+      "fallback_chain_length": 0,
+      "fallback_checks": 1,
+      "fallback_activated": false,
+      "final_response": "Сервіс тимчасово обмежив частоту запитів. Цю спробу зупинено. Зачекайте й надішліть повідомлення ще раз.",
+      "display_language_resolved": "uk",
+      "profile_overlay_enabled": true,
+      "native_agent_final_localized": true,
+      "negative_cases": {
+        "success": "unchanged",
+        "auth": "unchanged",
+        "partial": "unchanged",
+        "usage_window": "unchanged"
+      },
+      "failure_retryable": true,
+      "error_metadata_preserved": true,
+      "billing_block_present": false,
+      "real_profile_plugin_discovered": true,
+      "output_hook_positive_control": true,
+      "native_error_hook_categories": [
+        "rate_limit"
+      ],
+      "output_hook_calls_for_failed_turn": 0,
+      "failure_reason": "rate_limit",
+      "turn_exit_reason": null,
+      "real_network_requests": 0
+    },
+    {
+      "http_status_simulated": 402,
+      "client_attempts": 1,
+      "api_max_retries": 1,
+      "auto_recovery_cycles": 0,
+      "fallback_chain_length": 0,
+      "fallback_checks": 1,
+      "fallback_activated": false,
+      "final_response": "Billing or credits exhausted: HTTP 402: Synthetic insufficient credits\n\nNVIDIA reported that billing, credits, or account entitlement is exhausted for deepseek-ai/deepseek-v4.1-flash.\nAdd credits or update billing with that provider, then retry.\nNVIDIA billing: https://build.nvidia.com/settings/billing\nYou can switch providers temporarily with /model <model> --provider <provider>.",
+      "display_language_resolved": "uk",
+      "profile_overlay_enabled": false,
+      "native_agent_final_localized": false,
+      "negative_cases": {
+        "success": "unchanged",
+        "auth": "unchanged",
+        "partial": "unchanged",
+        "usage_window": "unchanged",
+        "no_overlay": "unchanged"
+      },
+      "failure_retryable": false,
+      "error_metadata_preserved": true,
+      "billing_block_present": true,
+      "real_profile_plugin_discovered": true,
+      "output_hook_positive_control": true,
+      "native_error_hook_categories": [
+        "billing"
+      ],
+      "output_hook_calls_for_failed_turn": 0,
+      "failure_reason": "billing",
+      "turn_exit_reason": null,
+      "real_network_requests": 0
+    },
+    {
+      "http_status_simulated": 429,
+      "client_attempts": 1,
+      "api_max_retries": 1,
+      "auto_recovery_cycles": 0,
+      "fallback_chain_length": 0,
+      "fallback_checks": 1,
+      "fallback_activated": false,
+      "final_response": "NVIDIA NIM is rate-limiting requests right now — it looks temporarily unavailable. Wait a minute and send /retry, or switch models with /model. To avoid this in future, add a backup provider with `hermes fallback add`.\n\nProvider said: HTTP 429: Synthetic rate limit exceeded",
+      "display_language_resolved": "uk",
+      "profile_overlay_enabled": false,
+      "native_agent_final_localized": false,
+      "negative_cases": {
+        "success": "unchanged",
+        "auth": "unchanged",
+        "partial": "unchanged",
+        "usage_window": "unchanged",
+        "no_overlay": "unchanged"
+      },
+      "failure_retryable": true,
+      "error_metadata_preserved": true,
+      "billing_block_present": false,
+      "real_profile_plugin_discovered": true,
+      "output_hook_positive_control": true,
+      "native_error_hook_categories": [
+        "rate_limit"
+      ],
+      "output_hook_calls_for_failed_turn": 0,
+      "failure_reason": "rate_limit",
+      "turn_exit_reason": null,
+      "real_network_requests": 0
+    }
+  ],
+  "quota_final_ukrainian_requirement_met": true,
+  "runtime": "Hermes v0.22.5 pinned base plus reviewed local quota patch",
+  "gateway_started": false,
+  "live_telegram_delivery_verified": false,
+  "inference_requests": 0,
+  "patch": {
+    "manifest": "config/hermes-patch.json",
+    "applied": true,
+    "verified": true,
+    "base_pin_unchanged": true
+  }
+}

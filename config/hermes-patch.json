@@ -1,0 +1,15 @@
+{
+  "base_commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+  "patch": "patches/quota-profile-copy.patch",
+  "patch_sha256": "c5c7d506244d2cab224956c95f076c62dfe670bf68ac07147a40ebd37b101c71",
+  "files": {
+    "agent/turn_recovery.py": {
+      "base_sha256": "7e0210cbf902b53081f849e1c33ac7e5882c15a46f10d0ada65ab7d1db92d85f",
+      "patched_sha256": "93597d1751672337e76758b09b16ca03e0ce8b42fe1b37f38ce02ee682e7979d"
+    },
+    "agent/quota_profile_copy.py": {
+      "base_sha256": null,
+      "patched_sha256": "00e59e879fb0fe82781858bac6b22c33e684928da1eac1ea6dbc25eb04e25c95"
+    }
+  }
+}

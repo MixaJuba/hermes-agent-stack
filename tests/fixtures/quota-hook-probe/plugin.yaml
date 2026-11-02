@@ -1,0 +1,6 @@
+name: quota-hook-probe
+version: 1.0.0
+description: Offline test observer for quota output hook reachability; never changes text.
+provides_hooks:
+  - api_request_error
+  - transform_llm_output

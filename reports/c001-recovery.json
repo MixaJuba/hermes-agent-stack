@@ -1,0 +1,73 @@
+{
+  "task": "C-001",
+  "project_head_before": "57f3b264d40a3522741b080cf537829cd01ea305",
+  "project_branch_before": "work",
+  "main_before": "57f3b264d40a3522741b080cf537829cd01ea305",
+  "source_head": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+  "source_detached": true,
+  "recovered_previous_test": "completed FAIL: 402 final remained English",
+  "patch_was_already_applied": true,
+  "preexisting_manifest_hashes_matched": true,
+  "patch_reapplied_this_task": false,
+  "recovery_modified_project_files": [
+    "README.md",
+    "docs/CONTINUATION.uk.md",
+    "docs/SETUP.uk.md"
+  ],
+  "recovery_untracked_project_files": [
+    "config/hermes-patch.json",
+    "deploy/Dockerfile.sandbox",
+    "deploy/SOUL.md",
+    "deploy/gateway_guard.py",
+    "deploy/hermes-config.json",
+    "deploy/hermes-ua.service",
+    "deploy/locales/uk.yaml",
+    "deploy/render_config.py",
+    "docs/BACKUP-QUOTA.uk.md",
+    "docs/QUOTA-PATCH.uk.md",
+    "docs/RUNTIME.uk.md",
+    "patches/quota-profile-copy.patch",
+    "proposals/quota-profile-copy.patch",
+    "reports/backup-check.json",
+    "reports/quota-check.json",
+    "reports/runtime-check.json",
+    "scripts/hermes_runtime.py",
+    "tests/check_hermes_backup.py",
+    "tests/check_hermes_offline.py",
+    "tests/check_hermes_quota.py",
+    "tests/check_hermes_sandbox.py",
+    "tests/fixtures/quota-hook-probe/__init__.py",
+    "tests/fixtures/quota-hook-probe/plugin.yaml",
+    "tests/test_deployment_guard.py",
+    "tests/test_runtime_guard.py",
+    "tests/test_source_patch.py"
+  ],
+  "minimum_fix": "Wrapper passes attested source first in PYTHONPATH to external scripts and children; native import origins asserted",
+  "narrow_tests": "PASS: source attestation 1 test; native quota 4 cases with negative cases",
+  "regression": {
+    "command": "python3 -m unittest discover -s tests -v",
+    "exit_code": 0,
+    "checked_at_utc": "2026-11-02T00:16:04+00:00"
+  },
+  "regression_tests_passed": 20,
+  "quota_patch": "VERIFIED",
+  "inference_requests": 0,
+  "installs": 0,
+  "production_provider": "unselected; NVIDIA TEST ONLY",
+  "telegram_delivery": "not verified",
+  "billing_block_display": "not verified; metadata retained",
+  "arm64": "read-only check scheduled after checkpoint",
+  "secret_scan": {
+    "status": "PASS",
+    "files_scanned": 38,
+    "findings": [],
+    "private_auth_files_included": false,
+    "reviewed_unchanged_mock_test_literals": [
+      "tests/test_access.py:67",
+      "tests/test_access.py:80",
+      "tests/test_access.py:85"
+    ],
+    "scope": "all prospective project files; API/token/private-key formats, credential literals, private auth paths"
+  },
+  "patch_context_whitespace": ".gitattributes disables blank-at-eol only for unified patch artifacts, preserving approved patch bytes/SHA; application code checks unchanged"
+}

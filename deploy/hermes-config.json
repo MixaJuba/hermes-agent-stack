@@ -1,0 +1,49 @@
+{
+  "model": {
+    "provider": "nvidia",
+    "default": "deepseek-ai/deepseek-v4.1-flash",
+    "base_url": "https://integrate.api.nvidia.com/v1",
+    "streaming": true
+  },
+  "fallback_model": [],
+  "auth": {"adopt_external_logins": false},
+  "security": {"allow_lazy_installs": false},
+  "display": {"language": "uk"},
+  "agent": {"max_turns": 8, "api_max_retries": 1, "auto_recovery_cycles": 0, "run_budget_seconds": 180},
+  "max_concurrent_sessions": 1,
+  "platform_toolsets": {
+    "cli": ["terminal", "file", "memory", "session_search", "web", "clarify"],
+    "telegram": ["terminal", "file", "memory", "session_search", "web", "clarify"]
+  },
+  "terminal": {
+    "backend": "docker",
+    "cwd": "/workspace",
+    "timeout": 30,
+    "lifetime_seconds": 300,
+    "docker_image": "hermes-ua-sandbox:local",
+    "docker_network": false,
+    "docker_mount_cwd_to_workspace": false,
+    "docker_run_as_host_user": true,
+    "docker_forward_env": [],
+    "docker_env": {},
+    "docker_volumes": [],
+    "docker_extra_args": ["--pids-limit", "128"],
+    "container_cpu": 1,
+    "container_memory": 512,
+    "container_persistent": true,
+    "docker_shm_size": "64m"
+  },
+  "web": {"backend": "exa", "search_backend": "exa", "extract_backend": "exa", "keyless_fallback": false, "keyless_rescue": false},
+  "memory": {"memory_enabled": true, "user_profile_enabled": true},
+  "stt": {"enabled": false},
+  "approvals": {"mode": "smart", "cron_mode": "deny", "single_query_mode": "deny"},
+  "auxiliary": {
+    "title_generation": {"enabled": false, "model_upgrade_enabled": false},
+    "background_review": {"enabled": false},
+    "compression": {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4.1-flash", "fallback_chain": []},
+    "session_search": {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4.1-flash", "fallback_chain": []},
+    "web_extract": {"provider": "nvidia", "model": "deepseek-ai/deepseek-v4.1-flash", "fallback_chain": []}
+  },
+  "platforms": {"telegram": {"enabled": true, "dm_policy": "allowlist", "group_policy": "disabled", "allowed_chats": [], "guest_mode": false}},
+  "streaming": {"enabled": true}
+}

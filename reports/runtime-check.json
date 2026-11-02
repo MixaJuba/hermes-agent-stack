@@ -1,0 +1,93 @@
+{
+  "checked_at_utc": "2026-11-02T00:17:20+00:00",
+  "scope": "remote_preparation_not_deployment",
+  "hermes_version": "0.22.5",
+  "source_commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+  "python_version": "3.14.9",
+  "cli_version_and_gateway_help_verified": true,
+  "pm_doctor_required_packages_passed": true,
+  "pm_artifact_and_lock_verification_preserved": true,
+  "unit_tests_passed": 20,
+  "native_offline_checks": {
+    "hermes_config_validation": "passed",
+    "exa_only_no_keyless_resolution": "passed",
+    "real_gateway_owner_missing_and_foreign_denied": "passed",
+    "native_pairing_union_detected_and_startup_blocked": "passed",
+    "three_messages_survive_database_close_reopen": "passed",
+    "python_version": "3.14.9",
+    "packages": {
+      "openai": "2.24.0",
+      "python-telegram-bot": "22.8",
+      "exa-py": "2.10.2"
+    },
+    "optional_voice_packages": {
+      "faster-whisper": "not installed",
+      "sounddevice": "not installed",
+      "edge-tts": "not installed",
+      "elevenlabs": "not installed"
+    },
+    "inference_requests": 0,
+    "telegram_gateway_started": false
+  },
+  "native_sandbox_check": {
+    "non_root": true,
+    "secrets_absent": true,
+    "docker_socket_absent": true,
+    "host_checkout_absent": true,
+    "file_round_trip": true,
+    "metadata_unreachable": true,
+    "native_hermes_backend": true,
+    "model_tool_loop": false,
+    "inference_requests": 0
+  },
+  "unauthenticated_post_diagnostic": {
+    "authorization_sent": false,
+    "post_attempts": 1,
+    "http_status": 401,
+    "status": "http_response",
+    "elapsed_seconds": 0.193
+  },
+  "installed_sdk_diagnostic": {
+    "client": "installed OpenAI SDK",
+    "post_attempts": 1,
+    "http_status": null,
+    "headers_seconds": null,
+    "first_sse_seconds": null,
+    "content": null,
+    "finish_reason": null,
+    "usage": null,
+    "success": false,
+    "status": "transport_failure_no_retry",
+    "exception_type": "APITimeoutError",
+    "elapsed_seconds": 75.387
+  },
+  "test_container_cleanup_completed": true,
+  "startup_without_owner_or_secrets": "blocked_exit_2",
+  "model_tool_loop_verified": false,
+  "telegram_gateway_started": false,
+  "oracle_resources_created": false,
+  "production_eligibility_confirmed": false,
+  "committed_or_pushed": false,
+  "environment_published": false,
+  "windows_install_denied_before_subprocess": true,
+  "systemd_unit_static_validation": "passed_not_activated",
+  "upstream_tracked_changes": "exact approved local patch only",
+  "backup_quota_stage": {
+    "native_synthetic_restore": "passed_fresh_process",
+    "quota_402_attempts": 1,
+    "quota_429_attempts": 1,
+    "fallback_activations": 0,
+    "quota_final_ukrainian_requirement_met": true,
+    "inference_requests": 0,
+    "work_paused": false,
+    "stage_background_commands_remaining": 0,
+    "reports": [
+      "backup-check.json",
+      "quota-check.json"
+    ],
+    "scope": "C-001 recovery and checkpoint",
+    "profile_output_hook_bypassed_by_quota_early_result": true,
+    "upstream_patch_applied": true
+  },
+  "local_patch_manifest": "config/hermes-patch.json"
+}
