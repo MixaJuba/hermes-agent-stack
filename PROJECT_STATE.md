@@ -57,7 +57,7 @@ Hermes Agent
    ├── Exa web search
    └── isolated Docker tool environment
 
-Host: Oracle Always Free ARM64 VM, якщо provisioning і нативний runtime пройдуть перевірку.
+Host: перевірена Oracle Always Free A1 ARM64 VM; нативний Hermes runtime на ній ще має пройти L-003.
 Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 ```
 
@@ -97,7 +97,7 @@ Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 
 **CONFIRMED**
 
-- Перевірений checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
+- Перевірений implementation checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
 - Hermes source: `v0.22.5`, commit `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
 - У Codex Cloud Hermes runtime було встановлено штатним PM.
 - Managed Python: `3.14.9`.
@@ -119,24 +119,36 @@ Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 
 ### 6.2 Oracle Cloud
 
-**CONFIRMED через авторизовану Oracle Console під час L-001**
+**CONFIRMED**
+
+Control plane / L-001:
 
 - Home Region: **Germany Central (Frankfurt), `eu-frankfurt-1`**.
 - Account: Free Tier / Free Trial; Always Free eligible; платний upgrade не активований.
-- `VM.Standard.A1.Flex`: видимий і позначений Always Free-eligible.
-- Always Free A1 allowance за чинними умовами, перевіреними на етапі L-001: **2 OCPU / 12 GB RAM**.
-- `VM.Standard.E2.1.Micro`: видимий і Always Free-eligible.
-- Block/boot volume free allowance: **200 GB**; на момент L-001 використання 0 GB.
-- 5 backup slots були видимі; використання 0/5.
+- Always Free A1 allowance, перевірений на етапі L-001: **2 OCPU / 12 GB RAM**.
+- Block/boot volume free allowance: **200 GB**.
 - Availability domains: AD-1, AD-2, AD-3.
-- A1 був доступний у формі в усіх трьох AD; E2 Micro — в AD-3.
-- Підготовлена конфігурація A1: 1 OCPU / 6 GB, Ubuntu 24.04 Minimal aarch64, 50 GB boot volume.
 
-**UNKNOWN**
+Provisioned host / L-002:
 
-- Реальна host capacity. Її можна остаточно підтвердити тільки provisioning-спробою.
+- Створено рівно одну VM `hermes-agent-prod`.
+- Lifecycle: `RUNNING`.
+- Shape: `VM.Standard.A1.Flex`.
+- Placement: `EU-FRANKFURT-1-AD-1`.
+- Реально на VM: **1 OCPU, ~6 GB RAM, `aarch64`, Ubuntu 24.04.5 LTS Minimal**.
+- Boot volume: **50 GB**, root filesystem приблизно 48G.
+- Always Free usage після provisioning: **1/2 OCPU, 6/12 GB RAM, 50/200 GB storage**.
+- Capacity: підтверджена успішним provisioning з першої спроби; capacity errors не було.
+- SSH: працює; повторне підключення PASS.
+- Public subnet: YES; ephemeral public IPv4 assigned.
+- Default route: `0.0.0.0/0 -> Internet Gateway`.
+- Ingress: лише `TCP/22` з погодженого `/32`; зайвих ingress rules не додано.
+- Outbound GitHub HTTPS: PASS, HTTP 200 на public endpoint, TLS verification PASS.
+- Платних ресурсів у межах L-002 не створено.
 
-Доказовий snapshot: [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md).
+Git на Minimal image не встановлений; це не блокер L-002. Private repository без GitHub credentials закономірно повертав `401`; credentials на VM не додавали.
+
+Докази: [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md), [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md).
 
 ### 6.3 Telegram
 
@@ -192,54 +204,46 @@ Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 - Account/key та реальна квота цього користувача ще не є підтвердженим production-фактом.
 - Підключати лише після готовності базового runtime і вибору основного inference-provider.
 
-## 7. Активний етап
+## 7. Наступний активний gate
 
-### L-002 — Oracle VM provisioning
+### L-003 — Runtime on Oracle
 
-**IN PROGRESS у Локальному Codex.**
+**PLANNED / READY TO START у Локальному Codex.**
 
-Мета: створити **одну** Always Free A1 VM і довести тільки базову придатність host-а.
+Мета: на вже перевіреній Oracle A1 ARM64 VM розгорнути тільки базовий pinned Hermes runtime та Docker sandbox без provider credentials, Exa і Telegram token.
 
-Погоджена цільова конфігурація:
+Ключові вимоги:
 
-- `VM.Standard.A1.Flex`;
-- 1 OCPU;
-- 6 GB RAM;
-- Ubuntu 24.04 Minimal ARM64/aarch64;
-- 50 GB boot volume;
-- on-demand;
-- мінімальний inbound доступ, SSH без публікації private key;
-- без Hermes, Docker, provider OAuth, Telegram token або Exa на цьому етапі.
+- доставити прийнятий repository state на VM без збереження GitHub PAT/OAuth credentials на сервері;
+- встановити тільки необхідні системні prerequisites;
+- отримати офіційний Hermes source і закріпити його на `v0.22.5` / `bf0203a...`;
+- застосувати тільки reviewed quota patch через `scripts/hermes_runtime.py`;
+- встановити runtime штатним PM на ARM64;
+- перевірити `hermes --version`, gateway help/config validation і Docker sandbox smoke test;
+- не підключати inference provider, Exa або Telegram;
+- не активувати systemd production service;
+- не відкривати нові inbound ports.
 
-Критерій PASS L-002:
+Критерій PASS L-003: pinned Hermes реально запускається нативно на Oracle ARM64, Docker sandbox працює ізольовано, а жодних production secrets/provider routes ще немає.
 
-- VM = RUNNING;
-- `uname -m = aarch64`;
-- Ubuntu 24.04;
-- 1 CPU / близько 6 GB RAM / 50 GB root volume;
-- SSH працює повторно;
-- outbound GitHub HTTPS працює;
-- не створено платних ресурсів або зайвих inbound ports.
+**Cloud Codex не потрібен на старті L-003.** Залучати його лише при конкретному кодовому/runtime блокері, який неможливо безпечно вирішити на цільовому host-і.
 
-**Cloud Codex на L-002 не потрібен.**
-
-## 8. Наступні gates після L-002
+## 8. Наступні gates після L-003
 
 Порядок може змінитися лише за фактичним блокером, але не через повторне переосмислення вже вирішеного.
 
-1. **L-003 / Runtime on Oracle** — clone прийнятого `main`, встановити pinned Hermes штатним способом на ARM64, перевірити CLI/runtime і Docker sandbox; без секретів та без Telegram запуску.
-2. **Provider qualification** — один контрольований тест кожного потрібного кандидата на незмінному Hermes checkpoint; обрати production provider за фактом.
-3. **Exa integration** — перевірити акаунт/квоту, встановити key без Git, виконати реальний search із джерелами.
-4. **Telegram integration** — безпечно ввести token і owner ID, перевірити webhook/polling, запустити один gateway.
-5. **systemd + persistence** — автозапуск, reboot, process restart, memory persistence.
-6. **backup/restore on target VM** — перевірити disaster recovery реальної інсталяції.
-7. **Final E2E acceptance** — усі 8 критерії з розділу 2.
+1. **Provider qualification** — один контрольований тест потрібних кандидатів на незмінному Hermes runtime; обрати production provider за фактом.
+2. **Exa integration** — перевірити акаунт/квоту, встановити key без Git, виконати реальний search із джерелами.
+3. **Telegram integration** — безпечно ввести token і owner ID, перевірити webhook/polling, запустити один gateway.
+4. **systemd + persistence** — автозапуск, reboot, process restart, memory persistence.
+5. **backup/restore on target VM** — перевірити disaster recovery реальної інсталяції.
+6. **Final E2E acceptance** — усі 8 критерії з розділу 2.
 
 ## 9. Прийняті технічні рішення
 
 - **D-001:** Local Codex — браузер/акаунти/SSH/людські підтвердження; Cloud Codex — Linux/Hermes/code/tests.
 - **D-002:** GitHub `main` — прийнятий стан; handoff через SHA.
-- **D-003:** Oracle Always Free A1 — цільовий host, але придатність остаточно підтверджується тільки реальним provisioning + runtime test.
+- **D-003:** Oracle Always Free A1 підтверджений як реальний host на L-002; нативний Hermes runtime на ARM64 ще має пройти L-003.
 - **D-004:** NVIDIA = TEST ONLY.
 - **D-005:** Production inference-provider не фіксується до фактичної кваліфікації.
 - **D-006:** Нуль paid fallback / auto-recharge / прихованих платних маршрутів.
@@ -247,12 +251,13 @@ Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 - **D-008:** Secrets не передавати через чат/Git; вводити тільки у захищене цільове середовище.
 - **D-009:** Hermes pin `v0.22.5` не змінювати без окремого upgrade-рішення і regression.
 - **D-010:** Exa — цільовий web search; keyless fallback вимкнений.
+- **D-011:** SSH до Oracle лишається обмеженим погодженим `/32`; не розширювати до `0.0.0.0/0` без конкретної потреби й review.
 
 ## 10. Що НЕ можна вважати підтвердженим
 
 Не перетворювати на факт:
 
-- доступність Oracle capacity до успішного provisioning;
+- нативну працездатність Hermes на Oracle лише з факту ARM64-сумісних PM/Docker artifacts;
 - придатність Gemini Free для 24/7 Hermes до реальних agent-turn tests;
 - придатність ChatGPT/Codex subscription як production route до реального Hermes OAuth + usage test;
 - працездатність Telegram лише з факту існування BotFather bot-а;
@@ -266,7 +271,8 @@ Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 - [`docs/BACKUP-QUOTA.uk.md`](docs/BACKUP-QUOTA.uk.md) — synthetic backup/restore та quota simulations.
 - [`docs/QUOTA-PATCH.uk.md`](docs/QUOTA-PATCH.uk.md) — rationale quota overlay.
 - [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md) — sanitized Local Codex control-plane findings.
-- [`config/upstream.json`](config/upstream.json) — pinned Hermes upstream.
+- [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md) — sanitized proof of the provisioned Oracle A1 host, SSH and network checks.
+- [`config/upstream.json`](config/upstream.json) — pinned Hermes upstream metadata; current provider decision is governed by this file's pin fields plus `PROJECT_STATE.md`, not by historical model notes.
 - [`reports/c001-recovery.json`](reports/c001-recovery.json) — recovery evidence.
 
 ## 12. Правило оновлення цього файлу
