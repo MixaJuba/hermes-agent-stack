@@ -1,0 +1,36 @@
+{
+  "task": "C-002",
+  "owner": "CLOUD_CODEX",
+  "base_sha": "06875acd61448e86aebfb90892ef43fcd228760b",
+  "branch": "cloud/c002-cloudflare-productionization",
+  "production_provider": "workers-ai",
+  "production_model": "@cf/zai-org/glm-4.7-flash",
+  "plugin_commit": "f6821d058d504ee6324b0d3217564b93124c09f9",
+  "l004c": "CONFIRMED/PASS from Local Codex supplied evidence; not rerun",
+  "narrow_tests": "12 stdlib deployment/guard tests + native schema/provider/17 auxiliary/quota/installer-contract PASS",
+  "full_regression": {
+    "command": "python3 -m unittest discover -s tests -v",
+    "exit_code": 0,
+    "checked_at_utc": "2026-11-02T11:24:43+00:00"
+  },
+  "full_regression_tests_passed": 24,
+  "main_attempts": 1,
+  "auxiliary_429_attempts": 2,
+  "model_provider_paid_fallback": "NONE",
+  "real_network_inference": 0,
+  "browser_account_actions": 0,
+  "oracle_deployed": false,
+  "telegram_started": false,
+  "exa_used": false,
+  "runtime_install_or_upstream_change": false,
+  "community_boundary": "pinned declarative ProviderProfile; Hermes/plugin upgrade requires requalification",
+  "next_gate": "L-005 — Exa integration via Local Codex",
+  "secret_scan": {
+    "status": "PASS",
+    "files_scanned": 54,
+    "findings": [],
+    "real_account_id_token_oracle_ip_or_auth_data_found": false,
+    "reviewed_baseline_mock_literals": 3
+  },
+  "diff_check": "PASS"
+}

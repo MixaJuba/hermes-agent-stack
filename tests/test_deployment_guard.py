@@ -15,7 +15,9 @@ SPEC.loader.exec_module(guard)
 class DeploymentGuardTests(unittest.TestCase):
     def setUp(self):
         self.config = json.loads((ROOT / 'deploy/hermes-config.json').read_text())
-        self.env = {'NVIDIA_API_KEY': 'test-only', 'EXA_API_KEY': 'test-only',
+        self.env = {'CLOUDFLARE_WORKERS_AI_API_TOKEN': 'test-only',
+                    'CLOUDFLARE_WORKERS_AI_BASE_URL': 'https://api.cloudflare.com/client/v4/accounts/' + '0' * 32 + '/ai/v1',
+                    'EXA_API_KEY': 'test-only',
                     'TELEGRAM_BOT_TOKEN': 'test-only', 'TELEGRAM_ALLOWED_USERS': '123456789'}
         self.config['platforms']['telegram']['allowed_chats'] = ['123456789']
 
@@ -25,6 +27,36 @@ class DeploymentGuardTests(unittest.TestCase):
 
     def test_complete_owner_only_configuration_passes(self):
         self.assertEqual(guard.validate(self.config, self.env), [])
+
+    def test_cloudflare_secrets_and_structural_url_required(self):
+        for key in ('CLOUDFLARE_WORKERS_AI_API_TOKEN', 'CLOUDFLARE_WORKERS_AI_BASE_URL', 'EXA_API_KEY', 'TELEGRAM_BOT_TOKEN'):
+            env = dict(self.env)
+            del env[key]
+            with self.subTest(missing=key):
+                self.assertTrue(guard.validate(self.config, env))
+        for url in ('http://api.cloudflare.com', 'https://evil.invalid/ai/v1',
+                    self.env['CLOUDFLARE_WORKERS_AI_BASE_URL'] + '?query=wrong',
+                    self.env['CLOUDFLARE_WORKERS_AI_BASE_URL'].replace('/ai/v1', '/ai-gateway')):
+            with self.subTest(url=url):
+                self.assertTrue(guard.validate(self.config, {**self.env, 'CLOUDFLARE_WORKERS_AI_BASE_URL': url}))
+
+    def test_old_or_unqualified_model_and_hidden_fallback_rejected(self):
+        for path, value in [(('model', 'provider'), 'nvidia'),
+                            (('model', 'provider'), 'custom'),
+                            (('model', 'default'), '@cf/zai-org/glm-5.3'),
+                            (('model', 'base_url'), 'https://example.invalid'),
+                            (('fallback_providers',), [{'provider': 'workers-ai', 'model': '@cf/zai-org/glm-5.3'}]),
+                            (('auxiliary', 'approval', 'model'), '@cf/openai/gpt-oss-20b'),
+                            (('auxiliary', 'compression', 'provider'), 'openrouter'),
+                            (('plugins', 'auto_apply'), True),
+                            (('auxiliary', 'compression', 'fallback_chain'), [{'provider': 'openai-codex'}])]:
+            config = copy.deepcopy(self.config)
+            target = config
+            for part in path[:-1]:
+                target = target[part]
+            target[path[-1]] = value
+            with self.subTest(path=path):
+                self.assertTrue(guard.validate(config, self.env))
 
     def test_missing_or_wildcard_owner_cannot_start(self):
         for owner in ('', '*', '123,456', '-123', '0'):

@@ -45,7 +45,10 @@
 
 ## 4. Gate C — inference-provider qualification
 
-Production provider не фіксується наперед.
+Поточний production provider після L-004C — Cloudflare Workers AI Free,
+`workers-ai / @cf/zai-org/glm-4.7-flash`. Повторно його не кваліфікувати без нової
+причини. Активний deployment: [C002-CLOUDFLARE-PRODUCTION.uk.md](C002-CLOUDFLARE-PRODUCTION.uk.md).
+Новий provider або upgrade потребує окремої кваліфікації; нижче стабільні критерії.
 
 Кожен реальний кандидат проходить однаковий мінімальний тест:
 

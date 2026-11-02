@@ -1,5 +1,10 @@
 # Віддалений runtime і заготовка Oracle
 
+> Історичний NVIDIA TEST ONLY snapshot C-001. Активна production-конфігурація
+> вже Cloudflare: [C-002](C002-CLOUDFLARE-PRODUCTION.uk.md), канонічний стан —
+> [PROJECT_STATE.md](../PROJECT_STATE.md). NVIDIA-прив’язка нижче описує історію,
+> не поточний tracked deployment. Підсумок source/runtime/ізоляції збережено.
+
 ## Межі поточного результату
 
 У Codex Cloud штатним PM установлено Hermes **v0.22.5**, commit

@@ -7,15 +7,29 @@ from pathlib import Path
 import re
 import stat
 
+PROVIDER = 'workers-ai'
+MODEL = '@cf/zai-org/glm-4.7-flash'
+AUX_TASKS = ('vision', 'compression', 'skills_hub', 'approval', 'review', 'mcp',
+             'title_generation', 'memory_query_rewrite', 'tts_audio_tags', 'voice_chat',
+             'triage_specifier', 'kanban_decomposer', 'profile_describer', 'goal_judge',
+             'curator', 'monitor', 'background_review')
+
+
+def cloudflare_base_url_valid(value):
+    return isinstance(value, str) and re.fullmatch(
+        r'https://api\.cloudflare\.com/client/v4/accounts/[0-9a-f]{32}/ai/v1/?', value) is not None
+
 
 def validate(config, env):
     problems = []
     owner = env.get('TELEGRAM_ALLOWED_USERS', '')
     if not re.fullmatch(r'[1-9][0-9]*', owner):
         problems.append('exactly one confirmed numeric owner ID is required')
-    for name in ('NVIDIA_API_KEY', 'EXA_API_KEY', 'TELEGRAM_BOT_TOKEN'):
+    for name in ('CLOUDFLARE_WORKERS_AI_API_TOKEN', 'CLOUDFLARE_WORKERS_AI_BASE_URL', 'EXA_API_KEY', 'TELEGRAM_BOT_TOKEN'):
         if not env.get(name):
             problems.append(name + ' is missing')
+    if not cloudflare_base_url_valid(env.get('CLOUDFLARE_WORKERS_AI_BASE_URL')):
+        problems.append('protected Cloudflare base URL must be the account OpenAI-compatible HTTPS endpoint')
     # A global/group grant or explicit allow-all must not override the one owner.
     for name in ('GATEWAY_ALLOWED_USERS', 'TELEGRAM_GROUP_ALLOWED_USERS', 'TELEGRAM_GROUP_ALLOWED_CHATS',
                  'TELEGRAM_ALLOWED_GROUPS', 'TELEGRAM_GROUP_ALLOW_FROM'):
@@ -25,8 +39,10 @@ def validate(config, env):
         if env.get(name, '').lower() not in ('', 'false', '0', 'no'):
             problems.append('allow-all access is forbidden')
     model = config.get('model', {})
-    if (model.get('provider') != 'nvidia' or model.get('default') != 'deepseek-ai/deepseek-v4.1-flash'
-            or model.get('base_url') != 'https://integrate.api.nvidia.com/v1' or config.get('fallback_model') != []):
+    if (model.get('provider') != PROVIDER or model.get('default') != MODEL
+            or set(model) - {'provider', 'default', 'streaming'}
+            or config.get('fallback_model') != [] or config.get('fallback_providers') != []
+            or config.get('custom_providers') or config.get('providers')):
         problems.append('unreviewed model route or fallback')
     web = config.get('web', {})
     if any(web.get(k) != 'exa' for k in ('backend', 'search_backend', 'extract_backend')) or any(
@@ -48,11 +64,26 @@ def validate(config, env):
     if agent.get('api_max_retries') != 1 or agent.get('auto_recovery_cycles') != 0:
         problems.append('automatic inference retry ladder must stay disabled')
     auxiliary = config.get('auxiliary', {})
-    for task in ('compression', 'session_search', 'web_extract'):
+    if auxiliary.get('transient_retries') != 0 or auxiliary.get('free_only') is not True:
+        problems.append('auxiliary retries/free-only policy changed')
+    if set(auxiliary) - set(AUX_TASKS) - {'transient_retries', 'free_only'}:
+        problems.append('unreviewed auxiliary configuration')
+    for task in AUX_TASKS:
         route = auxiliary.get(task, {})
-        if (route.get('provider') != 'nvidia' or route.get('model') != model.get('default')
-                or route.get('fallback_chain') != []):
-            problems.append('auxiliary routes must be pinned to NVIDIA without fallback')
+        if (route.get('provider') != PROVIDER or route.get('model') != MODEL
+                or route.get('fallback_chain') != [] or set(route) - {
+                    'provider', 'model', 'fallback_chain', 'enabled', 'model_upgrade_enabled', 'prefer_fast_model'}):
+            problems.append('auxiliary routes must use the qualified Cloudflare model without overrides/fallback')
+    if (auxiliary.get('title_generation', {}).get('enabled') is not False
+            or auxiliary.get('title_generation', {}).get('model_upgrade_enabled') is not False
+            or auxiliary.get('title_generation', {}).get('prefer_fast_model') is not False
+            or auxiliary.get('background_review', {}).get('enabled') is not False
+            or config.get('curator', {}).get('enabled') is not False):
+        problems.append('background/title/curator inference must remain disabled')
+    plugin_config = config.get('plugins', {})
+    if (plugin_config.get('enabled') != ['cloudflare-workers-ai-provider']
+            or plugin_config.get('auto_apply') is not False or plugin_config.get('auto_update_check_hours') != 0):
+        problems.append('only the pinned Cloudflare provider plugin may be selected')
     telegram = config.get('platforms', {}).get('telegram', {})
     if (telegram.get('dm_policy') != 'allowlist' or telegram.get('group_policy') != 'disabled'
             or telegram.get('guest_mode') is not False or telegram.get('allowed_chats') != [owner]):
@@ -95,6 +126,8 @@ def main():
         print('BLOCKED: generated JSON configuration is missing or invalid')
         return 2
     problems = validate(config, os.environ)
+    from cloudflare_plugin import attest as attest_cloudflare
+    problems += attest_cloudflare(args.config.parent)
     problems += validate_pairing(args.config.parent, os.environ.get('TELEGRAM_ALLOWED_USERS', ''))
     try:
         st = args.secret_file.lstat()

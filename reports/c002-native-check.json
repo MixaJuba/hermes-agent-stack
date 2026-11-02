@@ -1,0 +1,49 @@
+{
+  "schema": "PASS",
+  "plugin_catalog_pin": "f6821d058d504ee6324b0d3217564b93124c09f9",
+  "frozen_catalog_install_contract": "PASS (installer invocation inspected; no PM install executed)",
+  "plugin_attestation": "PASS",
+  "provider_runtime": "PASS",
+  "context_window": 131072,
+  "auxiliary_routes": {
+    "vision": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "compression": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "skills_hub": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "approval": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "review": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "mcp": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "title_generation": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "memory_query_rewrite": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "tts_audio_tags": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "voice_chat": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "triage_specifier": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "kanban_decomposer": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "profile_describer": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "goal_judge": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "curator": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "monitor": "workers-ai / @cf/zai-org/glm-4.7-flash",
+    "background_review": "workers-ai / @cf/zai-org/glm-4.7-flash"
+  },
+  "inference_requests": 0,
+  "telegram_started": false,
+  "exa_used": false,
+  "relay_telemetry": "native NoopRelayRuntime; middleware load isolated for synthetic SDK test",
+  "cloudflare_daily_free_429": {
+    "status": "PASS",
+    "attempts": 1,
+    "fallback_activated": false,
+    "model_switch": false,
+    "paid_fallback": false,
+    "failure_reason": "rate_limit",
+    "failure_retryable": true,
+    "metadata_preserved": true,
+    "final_response": "Cloudflare Workers AI Free обмежив частоту запитів або денну безкоштовну квоту. Запит зупинено. Дочекайтеся відновлення ліміту й спробуйте пізніше. Автоматичного переходу на оплату чи іншу модель немає."
+  },
+  "auxiliary_quota_failure": {
+    "status": "PASS",
+    "attempts": 2,
+    "native_same_provider_429_retry": 1,
+    "transient_retries": 0,
+    "provider_or_model_fallback": false
+  }
+}

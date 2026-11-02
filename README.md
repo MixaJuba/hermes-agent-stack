@@ -15,27 +15,28 @@
 - Прийнятий implementation checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
 - Hermes pinned: `v0.22.5` / `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
 - Cloud runtime і quota patch відновлені та перевірені.
-- Повний project regression: **20 PASS**.
-- Secret scan: PASS.
+- C-001 regression: **20 PASS**; C-002 offline production checks див. [`docs/C002-CLOUDFLARE-PRODUCTION.uk.md`](docs/C002-CLOUDFLARE-PRODUCTION.uk.md).
+- C-002 full project regression: **24 PASS**; native Cloudflare quota/config/auxiliary checks PASS.
+- Secret scan — перед Git handoff; історичний C-001 scan PASS.
 - Oracle Home Region: **Germany Central (Frankfurt), `eu-frankfurt-1`**.
 - Oracle host реально створений: одна Always Free `VM.Standard.A1.Flex`, **1 OCPU / 6 GB**, ARM64, Ubuntu 24.04.5 LTS Minimal, 50 GB boot volume.
 - VM = `RUNNING`; SSH і повторне SSH-підключення PASS; outbound GitHub HTTPS/TLS PASS.
 - Мережа VM: public subnet, ephemeral public IPv4, Internet Gateway, ingress тільки TCP/22 з погодженого `/32`.
 - L-003 PASS: pinned Hermes **v0.22.5** нативно встановлений на Oracle ARM64 через PM; managed Python **3.14.9** і CLI реально запускаються.
 - Docker **29.1.3** ARM64 і `hermes-ua-sandbox:local` перевірені; native DockerEnvironment smoke test PASS, `network=none`, non-root, без secrets/socket/host checkout.
-- Нових inbound ports не відкривали; provider credentials не додавали; inference requests = 0.
+- На L-003 нових inbound ports не відкривали й inference не виконували; наступний L-004C окремо кваліфікував Cloudflare.
 - Telegram bot існує: `@mixa_hermes_ua_bot`; gateway ще не запущений.
 - NVIDIA = **TEST ONLY**.
-- Production inference-provider навмисно **ще не обраний**: його буде визначено фактичними Hermes tool-loop і quota tests.
+- L-004C **CONFIRMED/PASS**: обрано **Cloudflare Workers AI Free**, provider `workers-ai`, model `@cf/zai-org/glm-4.7-flash`.
+- Community ProviderProfile plugin закріплено на `f6821d058d504ee6324b0d3217564b93124c09f9`; це не first-party Cloudflare/core integration.
+- OpenAI/Codex технічно кваліфікований, але виключений із production; модельних/платних fallback немає.
 - Exa залишається цільовим web-search provider; production integration ще не виконана.
 
 ## Наступний етап
 
-**Provider qualification.**
+**Після прийняття C-002: L-005 — Exa integration через Local Codex.**
 
-На вже перевіреному Oracle/Hermes runtime потрібно провести один контрольований agent/tool-loop тест для придатного безкоштовного candidate provider і вибрати production route за фактом, без платного fallback.
-
-Перший кандидат для перевірки — штатний Hermes `openai-codex`, якщо фактичний OAuth/usage route доступний і не вимагає окремого платного API-балансу. Якщо він не проходить критерії — перевіряється наступний безкоштовний кандидат.
+Production config, guard, plugin pin/attestation і synthetic quota описані в [C-002](docs/C002-CLOUDFLARE-PRODUCTION.uk.md). C-002 не розгортає зміни на Oracle й не запускає Telegram або Exa.
 
 ## Цільова схема
 
@@ -45,7 +46,7 @@ Telegram
 Hermes Gateway
    ↓
 Hermes Agent
-   ├── production inference provider (після фактичної кваліфікації)
+   ├── Cloudflare Workers AI Free / workers-ai / @cf/zai-org/glm-4.7-flash
    ├── persistent memory/history
    ├── Exa web search
    └── isolated Docker tools

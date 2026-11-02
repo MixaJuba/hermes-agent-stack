@@ -143,6 +143,7 @@ Production inference route обраний після реального test:
 Будь-який майбутній upgrade Hermes або Cloudflare plugin потребує окремої requalification.
 
 Доказ: [`docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md`](docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md).
+Sanitized closeout і token/Neuron accounting: [L004C-CLOSEOUT](docs/L004C-CLOSEOUT.uk.md), [machine evidence](reports/l004c-qualified.json).
 
 ### 6.5 Telegram — OBSERVED / НЕ ПІДКЛЮЧЕНО
 
@@ -163,22 +164,22 @@ Production inference route обраний після реального test:
 
 ### C-002 — Cloudflare productionization + deployment reproducibility
 
-**PLANNED / READY FOR CLOUD CODEX.**
+**CONFIRMED / implementation PASS, очікує прийняття координатором.**
 
-Причина: live L-004C PASS уже довів production provider, але tracked deployment artifacts досі містять історичну NVIDIA production-прив'язку.
+- Tracked production route: `workers-ai / @cf/zai-org/glm-4.7-flash`, account URL/token тільки із protected environment.
+- NVIDIA прибрано з production required secrets і main/auxiliary config; TEST ONLY history збережена.
+- Main fallback model/provider та всі auxiliary fallback chains порожні; plugin default auxiliary model перекрито explicit GLM route.
+- 17 auxiliary slots pinned; session_search/web_extract у цій версії не використовують auxiliary LLM.
+- Exact community plugin catalog commit + file hashes/source metadata attestation; auto-update/apply OFF; clean restore helper без unpinned latest.
+- Guard приймає synthetic правильний профіль і відхиляє old NVIDIA/paid або чужі routes, malformed URL, wildcard/foreign access та порушення sandbox/keyless/retry policy.
+- Native synthetic Cloudflare Free 429: PASS, main одна спроба; auxiliary bounded дві спроби на ідентичному Free route (один native same-provider recovery retry). HTTP/fallback/provider/model switch = 0.
+- Narrow deployment/guard/plugin/schema/native routing/quota checks PASS; full project regression **24 PASS**, один запуск після narrow PASS.
+- Cloudflare/Oracle/Telegram/Exa live tests не повторювалися; deployment на Oracle не виконано, gateway не запускався.
 
-C-002 повинен:
+Докази: [C-002](docs/C002-CLOUDFLARE-PRODUCTION.uk.md),
+[`reports/c002-native-check.json`](reports/c002-native-check.json).
 
-1. привести `deploy/hermes-config.json`, `gateway_guard.py`, `.env.example` і related tests/docs до Cloudflare production route;
-2. прибрати NVIDIA як production dependency, залишивши її лише як historical TEST ONLY evidence;
-3. закріпити `workers-ai` + `@cf/zai-org/glm-4.7-flash` без model/provider fallback;
-4. перевірити auxiliary routes, щоб вони не могли тихо піти в інший provider або paid model;
-5. зробити exact Cloudflare plugin pin відтворюваним для clean restore;
-6. додати synthetic Cloudflare Free quota/429 regression без live exhaustion;
-7. зберегти Telegram/Exa/systemd вимкненими на цьому етапі;
-8. після narrow PASS виконати full project regression один раз, diff check і secret scan.
-
-Cloud Codex не повинен використовувати live Cloudflare credentials або торкатися Oracle.
+**Після прийняття C-002 наступний найменший gate — L-005 Exa integration через Local Codex.**
 
 ## 8. Наступні gates після C-002
 
@@ -222,6 +223,9 @@ Cloud Codex не повинен використовувати live Cloudflare c
 Не трактувати жоден із цих пунктів як PASS до фактичного live test.
 
 ## 11. Evidence map
+
+- [`docs/C002-CLOUDFLARE-PRODUCTION.uk.md`](docs/C002-CLOUDFLARE-PRODUCTION.uk.md) — поточні production artifacts і offline proofs.
+- [`docs/L004C-CLOSEOUT.uk.md`](docs/L004C-CLOSEOUT.uk.md) — sanitized closeout без секретів.
 
 - [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md) — quota patch recovery + 20 PASS.
 - [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md) — historical cloud runtime/deployment snapshot.

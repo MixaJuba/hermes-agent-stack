@@ -1,0 +1,15 @@
+{
+  "name": "cloudflare-workers-ai-provider",
+  "provider": "workers-ai",
+  "model": "@cf/zai-org/glm-4.7-flash",
+  "repository": "https://github.com/AhmetArif0/hermes-cloudflare-workers-ai-provider",
+  "commit": "f6821d058d504ee6324b0d3217564b93124c09f9",
+  "subdir": "cloudflare-workers-ai-provider",
+  "tier": "community",
+  "hermes_commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+  "files": {
+    "README.md": "5e95eb7197622a7a09d4ccda1444bd301c010dca4c057532b8d52e344775e22a",
+    "__init__.py": "fd0054e1c251c60cd8c47963f6b32ca38f233d5fc528874bc839268145c25792",
+    "plugin.yaml": "0b01c4a465b53a06c1fef54dc12f88e0389045dcaf1117f1b64f04bcb6881ab9"
+  }
+}
