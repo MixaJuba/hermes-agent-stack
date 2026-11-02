@@ -57,7 +57,7 @@ Hermes Agent
    ├── Exa web search
    └── isolated Docker tool environment
 
-Host: перевірена Oracle Always Free A1 ARM64 VM; нативний Hermes runtime на ній ще має пройти L-003.
+Host: перевірена Oracle Always Free A1 ARM64 VM з нативним pinned Hermes runtime.
 Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 ```
 
@@ -97,6 +97,8 @@ Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 
 **CONFIRMED**
 
+Cloud / implementation checkpoint:
+
 - Перевірений implementation checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
 - Hermes source: `v0.22.5`, commit `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
 - У Codex Cloud Hermes runtime було встановлено штатним PM.
@@ -109,13 +111,30 @@ Source of truth: GitHub repository `MixaJuba/hermes-agent-stack`.
 - Secret scan: PASS.
 - PM містить Linux ARM64-артефакти; pinned Docker base image має `arm64/v8` manifest.
 
+Oracle target / L-003:
+
+- Accepted project state `5d8aea60b499e6cf3d21f800174cb18e83ffa2c2` передано на VM без GitHub credentials; 42 project files і Git tree повторно перевірені.
+- Official Hermes source на VM закріплено на `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
+- Reviewed local quota patch: **VERIFIED** через `scripts/hermes_runtime.py`.
+- PM install на `aarch64 / linux-arm64`: **PASS**.
+- Hermes CLI: **v0.22.5**, реальний запуск PASS.
+- `gateway --help`: PASS.
+- Managed Python **3.14.9**, реальний запуск PASS.
+- Docker **29.1.3**, ARM64.
+- `hermes-ua-sandbox:local` build: PASS.
+- Native `DockerEnvironment` smoke test: PASS.
+- Sandbox: non-root, writable isolated workspace, `network=none`, metadata route недоступний, published ports відсутні, secrets/Docker socket/host checkout відсутні.
+- Provider credentials не додавалися.
+- Inference requests: **0**.
+- Telegram gateway і production systemd service не запускалися.
+- Нових inbound ports не відкривали.
+
 **UNKNOWN / ще не доведено**
 
-- Нативне встановлення та виконання Hermes на реальній Oracle A1 ARM64 VM.
 - Реальний model → tool → result → final-answer цикл на production-кандидаті.
 - Реальна Telegram delivery quota/billing message.
 
-Докази: [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md), [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md), [`reports/c001-recovery.json`](reports/c001-recovery.json).
+Докази: [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md), [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md), [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md), [`reports/c001-recovery.json`](reports/c001-recovery.json).
 
 ### 6.2 Oracle Cloud
 
@@ -146,9 +165,9 @@ Provisioned host / L-002:
 - Outbound GitHub HTTPS: PASS, HTTP 200 на public endpoint, TLS verification PASS.
 - Платних ресурсів у межах L-002 не створено.
 
-Git на Minimal image не встановлений; це не блокер L-002. Private repository без GitHub credentials закономірно повертав `401`; credentials на VM не додавали.
+У L-003 додано тільки необхідні prerequisites і Docker/runtime; нових inbound ports або paid resources не додано.
 
-Докази: [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md), [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md).
+Докази: [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md), [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md), [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md).
 
 ### 6.3 Telegram
 
@@ -178,7 +197,7 @@ Git на Minimal image не встановлений; це не блокер L-0
 
 **UNRESOLVED — це навмисний стан.**
 
-Кандидати для фактичної кваліфікації після готовності Oracle/Hermes runtime:
+Кандидати для фактичної кваліфікації на вже готовому Oracle/Hermes runtime:
 
 - штатний Hermes `openai-codex` через наявний ChatGPT/Codex доступ, якщо OAuth і usage-модель реально придатні;
 - native Gemini provider у межах доступного Free Tier, якщо реальні Hermes agent turns вкладаються у квоти;
@@ -202,48 +221,45 @@ Git на Minimal image не встановлений; це не блокер L-0
 - Exa залишається цільовим web-search provider.
 - У конфігурації keyless fallback/rescue мають бути вимкнені.
 - Account/key та реальна квота цього користувача ще не є підтвердженим production-фактом.
-- Підключати лише після готовності базового runtime і вибору основного inference-provider.
+- Підключати після вибору основного inference-provider.
 
 ## 7. Наступний активний gate
 
-### L-003 — Runtime on Oracle
+### Provider qualification
 
 **PLANNED / READY TO START у Локальному Codex.**
 
-Мета: на вже перевіреній Oracle A1 ARM64 VM розгорнути тільки базовий pinned Hermes runtime та Docker sandbox без provider credentials, Exa і Telegram token.
+Мета: на вже перевіреному Oracle ARM64 host і незмінному pinned Hermes runtime виконати один мінімальний реальний agent/tool-loop test для придатного безкоштовного candidate provider і зафіксувати фактичну usage/quota поведінку.
+
+Перший кандидат для перевірки — штатний Hermes `openai-codex`, але тільки якщо реальний OAuth flow доступний і не вимагає окремого платного API-балансу або automatic credit spending.
 
 Ключові вимоги:
 
-- доставити прийнятий repository state на VM без збереження GitHub PAT/OAuth credentials на сервері;
-- встановити тільки необхідні системні prerequisites;
-- отримати офіційний Hermes source і закріпити його на `v0.22.5` / `bf0203a...`;
-- застосувати тільки reviewed quota patch через `scripts/hermes_runtime.py`;
-- встановити runtime штатним PM на ARM64;
-- перевірити `hermes --version`, gateway help/config validation і Docker sandbox smoke test;
-- не підключати inference provider, Exa або Telegram;
-- не активувати systemd production service;
-- не відкривати нові inbound ports.
+- не змінювати Hermes pin, quota patch або Docker sandbox;
+- не підключати кілька provider-ів одночасно;
+- не вмикати paid fallback або auto-recharge;
+- виконати один український turn і один реальний Hermes tool call;
+- перевірити tool result → final answer;
+- зафіксувати фактичну usage/quota поведінку;
+- при непридатності кандидата зупинитися і перейти до наступного окремим контрольованим тестом.
 
-Критерій PASS L-003: pinned Hermes реально запускається нативно на Oracle ARM64, Docker sandbox працює ізольовано, а жодних production secrets/provider routes ще немає.
+**Cloud Codex не потрібен на старті provider qualification.** Залучати його лише при конкретному кодовому/runtime блокері.
 
-**Cloud Codex не потрібен на старті L-003.** Залучати його лише при конкретному кодовому/runtime блокері, який неможливо безпечно вирішити на цільовому host-і.
-
-## 8. Наступні gates після L-003
+## 8. Наступні gates після provider qualification
 
 Порядок може змінитися лише за фактичним блокером, але не через повторне переосмислення вже вирішеного.
 
-1. **Provider qualification** — один контрольований тест потрібних кандидатів на незмінному Hermes runtime; обрати production provider за фактом.
-2. **Exa integration** — перевірити акаунт/квоту, встановити key без Git, виконати реальний search із джерелами.
-3. **Telegram integration** — безпечно ввести token і owner ID, перевірити webhook/polling, запустити один gateway.
-4. **systemd + persistence** — автозапуск, reboot, process restart, memory persistence.
-5. **backup/restore on target VM** — перевірити disaster recovery реальної інсталяції.
-6. **Final E2E acceptance** — усі 8 критерії з розділу 2.
+1. **Exa integration** — перевірити акаунт/квоту, встановити key без Git, виконати реальний search із джерелами.
+2. **Telegram integration** — безпечно ввести token і owner ID, перевірити webhook/polling, запустити один gateway.
+3. **systemd + persistence** — автозапуск, reboot, process restart, memory persistence.
+4. **backup/restore on target VM** — перевірити disaster recovery реальної інсталяції.
+5. **Final E2E acceptance** — усі 8 критерії з розділу 2.
 
 ## 9. Прийняті технічні рішення
 
 - **D-001:** Local Codex — браузер/акаунти/SSH/людські підтвердження; Cloud Codex — Linux/Hermes/code/tests.
 - **D-002:** GitHub `main` — прийнятий стан; handoff через SHA.
-- **D-003:** Oracle Always Free A1 підтверджений як реальний host на L-002; нативний Hermes runtime на ARM64 ще має пройти L-003.
+- **D-003:** Oracle Always Free A1 підтверджений як реальний host; L-003 підтвердив нативний pinned Hermes runtime і Docker sandbox на ARM64.
 - **D-004:** NVIDIA = TEST ONLY.
 - **D-005:** Production inference-provider не фіксується до фактичної кваліфікації.
 - **D-006:** Нуль paid fallback / auto-recharge / прихованих платних маршрутів.
@@ -252,16 +268,16 @@ Git на Minimal image не встановлений; це не блокер L-0
 - **D-009:** Hermes pin `v0.22.5` не змінювати без окремого upgrade-рішення і regression.
 - **D-010:** Exa — цільовий web search; keyless fallback вимкнений.
 - **D-011:** SSH до Oracle лишається обмеженим погодженим `/32`; не розширювати до `0.0.0.0/0` без конкретної потреби й review.
+- **D-012:** `l003-work/` та аналогічні task-local orchestration/scratch файли не є product source і не комітяться в `main`; після фіксації sanitized evidence їх можна видалити локально.
 
 ## 10. Що НЕ можна вважати підтвердженим
 
 Не перетворювати на факт:
 
-- нативну працездатність Hermes на Oracle лише з факту ARM64-сумісних PM/Docker artifacts;
 - придатність Gemini Free для 24/7 Hermes до реальних agent-turn tests;
 - придатність ChatGPT/Codex subscription як production route до реального Hermes OAuth + usage test;
 - працездатність Telegram лише з факту існування BotFather bot-а;
-- production-ready статус лише з offline/unit tests;
+- production-ready статус лише з runtime/sandbox tests;
 - безкоштовність сервісу лише через signup credits або trial balance.
 
 ## 11. Evidence map
@@ -272,6 +288,7 @@ Git на Minimal image не встановлений; це не блокер L-0
 - [`docs/QUOTA-PATCH.uk.md`](docs/QUOTA-PATCH.uk.md) — rationale quota overlay.
 - [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md) — sanitized Local Codex control-plane findings.
 - [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md) — sanitized proof of the provisioned Oracle A1 host, SSH and network checks.
+- [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md) — sanitized proof of native pinned Hermes runtime and Docker sandbox on Oracle ARM64.
 - [`config/upstream.json`](config/upstream.json) — pinned Hermes upstream metadata; current provider decision is governed by this file's pin fields plus `PROJECT_STATE.md`, not by historical model notes.
 - [`reports/c001-recovery.json`](reports/c001-recovery.json) — recovery evidence.
 
