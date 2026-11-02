@@ -6,6 +6,32 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = json.loads((ROOT / 'config/cloudflare-plugin.json').read_text())
+CATALOG_SIDECAR = '.hermes-catalog.json'
+
+
+def validate_catalog_sidecar(target):
+    """Allow pinned Hermes' inert convenience copy, never use it as provenance."""
+    path = target / CATALOG_SIDECAR
+    if path.is_symlink():
+        return ['Cloudflare catalog sidecar must not be symlinked']
+    if not path.exists():
+        return []  # Installer-owned metadata remains mandatory in attest().
+    if not path.is_file():
+        return ['Cloudflare catalog sidecar must be a regular JSON file']
+    try:
+        sidecar = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return ['Cloudflare catalog sidecar is malformed or unreadable']
+    expected = {'catalog_name': PIN['name'], 'repo': PIN['repository'],
+                'sha': PIN['commit'], 'tier': PIN['tier']}
+    if (not isinstance(sidecar, dict) or set(sidecar) - set(expected) - {'installed_at'}
+            or any(sidecar.get(key) != value for key, value in expected.items())):
+        return ['Cloudflare catalog sidecar does not match expected installer output']
+    if 'installed_at' in sidecar:
+        stamp = sidecar['installed_at']
+        if not isinstance(stamp, str) or not stamp.strip() or not stamp.isprintable():
+            return ['Cloudflare catalog sidecar installed_at must be a normal string']
+    return []
 
 
 def attest(home):
@@ -26,7 +52,9 @@ def attest(home):
             path = target / name
             if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
                 problems.append('Cloudflare plugin source integrity mismatch')
-        if any(p.name not in PIN['files'] and p.name != '__pycache__' for p in target.iterdir()):
+        problems += validate_catalog_sidecar(target)
+        if any(p.name not in PIN['files'] and p.name not in {'__pycache__', CATALOG_SIDECAR}
+               for p in target.iterdir()):
             problems.append('unreviewed files in Cloudflare plugin')
         if any(p.is_dir() and not p.name.startswith('.') and p.name != PIN['name'] for p in plugins.iterdir()):
             problems.append('additional profile plugins require review')

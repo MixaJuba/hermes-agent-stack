@@ -1,0 +1,42 @@
+{
+  "task": "C-002A",
+  "owner": "CLOUD_CODEX",
+  "base_sha": "02567a3cad56dcb9d1b3140b682076d1e2a5f2cf",
+  "branch": "cloud/c002a-catalog-sidecar-fix",
+  "hermes_commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+  "cloudflare_plugin_commit": "f6821d058d504ee6324b0d3217564b93124c09f9",
+  "root_cause": "C-002 fixture/allowlist omitted installer-created in-tree .hermes-catalog.json",
+  "pinned_writer": "hermes_cli.plugins_cmd_catalog.write_catalog_sidecar_record",
+  "installer_call": "hermes_cli/plugins_cmd_install.py catalog branch",
+  "authoritative_provenance": "plugins/.install-metadata.json only; unchanged exact revision/source/pinned checks",
+  "source_sha256_checks": "all three unchanged",
+  "allowed_sidecar": ".hermes-catalog.json",
+  "sidecar_policy": "optional; regular JSON object, no symlink, exact catalog_name/repo/sha/tier, optional nonempty printable installed_at string, no unknown fields",
+  "sidecar_proves_provenance": false,
+  "arbitrary_dotfiles_json_and_extras": "REJECTED",
+  "live_finding_source": "Sanitized Local Codex L-005 finding supplied by coordinator; Oracle not accessed by Cloud",
+  "live_source_or_provenance_mismatch_reported": false,
+  "compromise_found_in_supplied_diagnosis": false,
+  "narrow_attestation_tests_passed": 7,
+  "narrow_guard_tests_passed": 10,
+  "regression": {
+    "command": "python3 -m unittest discover -s tests -v",
+    "exit_code": 0,
+    "checked_at_utc": "2026-11-02T12:37:10+00:00"
+  },
+  "full_regression_tests_passed": 29,
+  "full_regression_runs": 1,
+  "native_installer_writer_used_by_fixture": true,
+  "live_oracle_reattestation": "NOT PERFORMED",
+  "provider_model_pins_unchanged": true,
+  "services_or_live_inference_used": false,
+  "l005_status": "PAUSED at Gate 2, before Exa account/key/API actions",
+  "next_action": "Coordinator review/accept C-002A; Local Codex resumes existing L-005 from Gate 2 using preserved l005-work; do not repeat completed Phase 1/Oracle stack sync unnecessarily",
+  "secret_scan": {
+    "status": "PASS",
+    "files_scanned": 56,
+    "findings": [],
+    "reviewed_unchanged_baseline_mock_literals": 3
+  },
+  "diff_check": "PASS"
+}

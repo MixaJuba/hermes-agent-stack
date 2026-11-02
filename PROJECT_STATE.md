@@ -5,7 +5,8 @@
 
 Оновлено: **2 листопада 2026 року**.
 
-Перевірений implementation checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
+Прийнятий implementation C-002: `02567a3cad56dcb9d1b3140b682076d1e2a5f2cf`.
+Історичний C-001 checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
 Документаційні коміти після нього можуть змінювати HEAD `main`, але не повинні змінювати перевірену реалізацію без окремого технічного етапу.
 
 ## 1. Статуси
@@ -153,18 +154,41 @@ Sanitized closeout і token/Neuron accounting: [L004C-CLOSEOUT](docs/L004C-CLOSE
 - owner numeric ID ще не підтверджений production E2E;
 - webhook/polling state ще не перевірений live.
 
-### 6.6 Exa — PLANNED
+### 6.6 Exa / L-005 — PAUSED AT GATE 2
 
 - Exa залишається цільовим web-search provider;
 - account/key і реальна безкоштовна quota конкретного користувача ще не кваліфіковані;
 - live search із фактичними URL ще не виконаний;
 - keyless fallback/rescue повинні залишатися OFF.
 
+За повідомленням Local Codex: accepted main перевірено, усі 54 tracked C-002
+files синхронізовано на Oracle без зміни `.env`/`config.yaml`; `l004c-work/`
+перевірено й видалено локально після secret scan. Gate 2 зупинився на expected
+installer sidecar `.hermes-catalog.json`, не на source/provenance mismatch.
+**Exa account/key/API дій ще не було. `l005-work` state зберігається.**
+
 ## 7. Поточний активний gate
+
+### C-002A — catalog-sidecar attestation correction
+
+**OFFLINE CONFIRMED/PASS; очікує coordinator acceptance та Local Oracle re-attestation.**
+
+- Exact pinned Hermes сам створює in-tree `.hermes-catalog.json`; C-002 allowlist/fixture помилково вважали його зайвим.
+- Підтверджені source hashes та installer-owned revision/source/pinned не змінилися; ознак plugin compromise за Local діагностикою немає.
+- Fix дозволяє тільки expected regular JSON sidecar із правильними catalog_name/repo/sha/tier та optional normal-string installed_at; symlink/malformed/unknown fields/extras відхиляються.
+- Єдине authoritative provenance джерело — `plugins/.install-metadata.json`; sidecar не замінює metadata або три SHA256 checks.
+- Narrow: 7 attestation + 10 guard PASS; full regression: **29 PASS**, один запуск після narrow PASS.
+- Hermes/plugin pins та production route незмінні. Exa/Telegram/systemd/Oracle не використовувалися.
+- **Live Oracle re-attestation PASS ще не підтверджений.**
+
+Доказ: [C-002A](docs/C002A-CATALOG-SIDECAR.uk.md), [`reports/c002a-closeout.json`](reports/c002a-closeout.json).
+
+Після прийняття fix Local Codex має **RESUME L-005 FROM GATE 2** з наявним `l005-work`,
+не повторюючи завершену Phase 1 або Oracle stack sync без нової причини.
 
 ### C-002 — Cloudflare productionization + deployment reproducibility
 
-**CONFIRMED / implementation PASS, очікує прийняття координатором.**
+**ACCEPTED / implementation PASS на `02567a3cad56dcb9d1b3140b682076d1e2a5f2cf`; в іншому чинний, attestation false positive виправляє C-002A.**
 
 - Tracked production route: `workers-ai / @cf/zai-org/glm-4.7-flash`, account URL/token тільки із protected environment.
 - NVIDIA прибрано з production required secrets і main/auxiliary config; TEST ONLY history збережена.
@@ -179,11 +203,11 @@ Sanitized closeout і token/Neuron accounting: [L004C-CLOSEOUT](docs/L004C-CLOSE
 Докази: [C-002](docs/C002-CLOUDFLARE-PRODUCTION.uk.md),
 [`reports/c002-native-check.json`](reports/c002-native-check.json).
 
-**Після прийняття C-002 наступний найменший gate — L-005 Exa integration через Local Codex.**
+**L-005 уже розпочато; поточний бар’єр — C-002A acceptance та повторна attestation у Gate 2, не початок L-005 заново.**
 
 ## 8. Наступні gates після C-002
 
-1. **L-005 Exa integration — Local Codex**: account/free quota, secure key, one real search із фактичними source URLs, no paid fallback.
+1. **L-005 Exa integration — Local Codex**: після C-002A acceptance RESUME FROM GATE 2 з preserved `l005-work`; не повторювати Phase 1/stack sync. Лише після attestation PASS — account/free quota, secure key, one real search із фактичними source URLs, no paid fallback.
 2. **L-006 Telegram integration — Local Codex**: secure bot token + confirmed numeric owner ID, webhook check, native long polling, one poller, owner-only access, outsider denied.
 3. **L-007 systemd + persistence — Local Codex**: install/enable service, process restart, reboot autostart, 3-message context, memory persistence, no second poller.
 4. **L-008 backup/restore — Local Codex**: real target VM backup/restore, permissions, memory/history recovery, 0 грн storage path.
@@ -223,6 +247,8 @@ Sanitized closeout і token/Neuron accounting: [L004C-CLOSEOUT](docs/L004C-CLOSE
 Не трактувати жоден із цих пунктів як PASS до фактичного live test.
 
 ## 11. Evidence map
+
+- [`docs/C002A-CATALOG-SIDECAR.uk.md`](docs/C002A-CATALOG-SIDECAR.uk.md) — corrective policy, native installer fixture та L-005 resume point.
 
 - [`docs/C002-CLOUDFLARE-PRODUCTION.uk.md`](docs/C002-CLOUDFLARE-PRODUCTION.uk.md) — поточні production artifacts і offline proofs.
 - [`docs/L004C-CLOSEOUT.uk.md`](docs/L004C-CLOSEOUT.uk.md) — sanitized closeout без секретів.

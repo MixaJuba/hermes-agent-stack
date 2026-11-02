@@ -1,5 +1,14 @@
 # C-002 — Cloudflare production configuration
 
+**Корекція C-002A після прийняття C-002:** перша реальна Oracle attestation у
+L-005 виявила false positive: штатний pinned catalog installer додає
+`.hermes-catalog.json` у папку плагіна, чого C-002 fixture не моделювала.
+Approved source hashes та authoritative install metadata залишалися правильними;
+ознак plugin compromise за наданою діагностикою немає. Виправлення дозволяє й
+валідує тільки цей inert sidecar, не довіряючи йому provenance. Подробиці й
+офлайн-тести: [C002A-CATALOG-SIDECAR.uk.md](C002A-CATALOG-SIDECAR.uk.md).
+Live Oracle re-attestation ще не виконана; L-005 продовжити з Gate 2 після прийняття fix.
+
 База: main `06875acd61448e86aebfb90892ef43fcd228760b`. Це підготовка коду,
 не deployment на Oracle. Live inference, Telegram, Exa та приватні акаунти
 в C-002 не використовуються. Наступний gate після прийняття: **L-005 Exa — Local Codex**.
