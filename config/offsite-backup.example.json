@@ -1,0 +1,10 @@
+{
+  "recipient": "REPLACE_WITH_PUBLIC_AGE_RECIPIENT",
+  "namespace": "REPLACE_NAMESPACE",
+  "bucket": "REPLACE_PRIVATE_BUCKET",
+  "region": "eu-frankfurt-1",
+  "prefix": "hermes-backups",
+  "home": "/var/lib/hermes-agent",
+  "local_dir": "/var/lib/hermes-agent/backups/offsite",
+  "restore_root": "/var/lib/hermes-dr-restores"
+}

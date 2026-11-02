@@ -1,0 +1,23 @@
+{
+  "task": "H-001C",
+  "base_sha": "247b0ccd3051a6b057951d99552d58f15aff5222",
+  "status": "OFFLINE PASS; H-001 live qualification pending",
+  "narrow_tests": 10,
+  "native_offsite_import": "PASS real extraction/config/memory/sessions/messages; only revival callback suppressed",
+  "existing_backup_regression": "PASS",
+  "production_guard_tests": 10,
+  "production_config_tests": 7,
+  "full_regression_tests": 39,
+  "full_regression_runs": 1,
+  "secret_scan": "PASS",
+  "age_and_oci": "stubbed offline; actual tools/cryptography/API not yet qualified",
+  "oci_auth": "instance_principal only; static env rejected; config file /dev/null",
+  "private_identity_created_or_stored": false,
+  "timer": "daily oneshot proposal; not activated",
+  "versioning": "ENABLED proposal",
+  "retention_rule": "NONE",
+  "lifecycle_delete": "NONE",
+  "network_used": false,
+  "github_network": "sync and branch push only",
+  "production_runtime_changed": false
+}

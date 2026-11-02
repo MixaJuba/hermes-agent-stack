@@ -1,91 +1,35 @@
-# hermes-agent-stack
+# Особистий Hermes-помічник у Telegram
 
-Персональний текстовий Hermes-агент українською мовою для Telegram на Oracle Cloud Always Free.
+Цей проєкт створений, щоб мати власного текстового ШІ-помічника українською:
+написати завдання в Telegram, продовжити попередню розмову й отримати результат
+із перевіреними джерелами. Доступ до бота має лише власник.
 
-## Статус
+## Що вже працює
 
-**LIVE PRODUCTION BASELINE ACCEPTED / FINAL E2E PASS.**
-
-Канонічний поточний стан: [`PROJECT_STATE.md`](PROJECT_STATE.md)
-
-Фінальна live acceptance:
-- [`docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md`](docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md)
-- [`reports/l006f-production-ready.json`](reports/l006f-production-ready.json)
-
-Операційний runbook:
-- [`docs/OPERATIONS-RUNBOOK.uk.md`](docs/OPERATIONS-RUNBOOK.uk.md)
-
-## Production stack
+На прийнятому live baseline бот відповідає українською, тримає контекст кількох
+повідомлень, пам’ятає збережені факти після перезапуску й reboot сервера.
+Він виконує завдання інструментами Hermes та шукає через Exa з реальними посиланнями.
+Перевірено owner-only доступ, автоматичний запуск і відновлення резерву в окрему
+папку. Помилки квот обробляються без переходу на платні моделі.
 
 ```text
-Telegram
-   ↓ native long polling / owner-only / one poller
-Hermes Gateway
-   ↓
-Hermes Agent
-   ├── Cloudflare Workers AI Free
-   │   workers-ai / @cf/zai-org/glm-4.7-flash
-   ├── persistent memory/history
-   ├── keyed Exa web search/extract
-   └── isolated Docker terminal tools
-
-Host: Oracle Always Free A1 ARM64
+Власник ↔ Telegram ↔ Hermes
+                      ├─ Cloudflare Workers AI Free — відповіді й виклики інструментів
+                      ├─ пам’ять та історія розмов
+                      ├─ Exa — пошук джерел
+                      └─ Docker — ізольоване виконання команд
+Сервер: Oracle Always Free ARM64; ноутбук не потрібний для роботи бота.
 ```
 
-## Підтверджено live
+## Що покращується зараз
 
-- правильний Telegram bot identity;
-- webhook відсутній;
-- owner-only access;
-- group access denied;
-- рівно один production poller;
-- українські відповіді в Telegram;
-- manual smoke `HERMES_TELEGRAM_OK`;
-- three-turn context continuity `4817 → 4817 → 4822`;
-- long-term memory після service restart і real VM reboot;
-- systemd autostart після reboot;
-- real Hermes terminal tool через Telegram з результатом `HERMES_FINAL_OK`;
-- sandbox `network=none`, non-root, без Docker socket/host checkout/secrets;
-- real keyed Exa search через Telegram з фактичним source URL;
-- native foreign-ID denial до inference;
-- quota-message delivery без навмисного вичерпання реальної квоти;
-- real production backup + isolated native restore memory/session/history/config;
-- backup: 419 files, приблизно 1.9 MB, private Oracle boot volume;
-- no OpenAI/Codex production route;
-- no NVIDIA production route;
-- no provider/model/paid fallback;
-- final secret scan PASS.
+Production бюджет — 0 грн, без платних резервних маршрутів або автоматичних списань.
+Працюючі компоненти закріплені на перевірених версіях. Зараз готуємо зашифровану
+копію резервів поза сервером: поточний перевірений backup лежить на тій самій VM
+і не захистить від повної втрати її диска. Новий remote recovery ще **не пройшов
+live qualification**; H-001C готує лише код, offline-тести та неактивовані шаблони.
 
-## Закріплені версії
-
-- Hermes: `v0.22.5` / `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
-- Cloudflare provider plugin: `f6821d058d504ee6324b0d3217564b93124c09f9`.
-- Exa dependency: `exa-py==2.10.2`.
-
-Зміна цих production pins потребує окремої requalification.
-
-## Основні правила
-
-- Production budget: **0 грн**.
-- Без auto-recharge, paid fallback або hidden paid routes.
-- Secrets не зберігаються у Git, чатах або звичайних логах.
-- NVIDIA = TEST ONLY.
-- OpenAI/Codex = development only, не production inference.
-- Telegram = native Hermes long polling; inbound public port не потрібен.
-- Voice/STT/TTS/Telethon зараз поза scope.
-- Accepted live baseline не змінювати напряму: спочатку branch/test/evidence/acceptance.
-
-## Поточна фаза
-
-Перший повний production baseline уже працює й прийнятий. Далі проєкт переходить у режим **production preservation / hardening**, а не хаотичного продовження build.
-
-Наступні напрямки не повинні ламати живу систему:
-
-- operational monitoring без другого poller і без paid services;
-- окремий future gate для encrypted off-site disaster-recovery backup;
-- planned upgrades тільки після requalification.
-
-Поточний backup перевірено реальним restore на тій самій Oracle VM, але він ще не є off-site DR copy.
+[Поточний стан і докази](PROJECT_STATE.md) · [Операційний runbook](docs/OPERATIONS-RUNBOOK.uk.md) · [DR implementation](docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md)
 
 ## Документація
 
