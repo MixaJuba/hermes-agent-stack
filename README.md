@@ -1,42 +1,75 @@
 # hermes-agent-stack
-Персональний AI-агент: Hermes + DeepSeek + Exa + Telegram + Telethon на Oracle Always Free. Стек для Codex у хмарі.
 
-## Поточний стан
+Персональний текстовий Hermes-агент українською мовою для Telegram, який має працювати на придатній безкоштовній Oracle Cloud інфраструктурі, мати довготривалу пам'ять, інструменти та вебпошук без непередбачених платних маршрутів.
 
-**Почати продовження:** [підсумок вимог, результатів і наступних кроків](docs/CONTINUATION.uk.md).
+## Почати звідси
 
-**Новий перевірений етап:** [runtime Hermes, offline-тести та заготовка Oracle](docs/RUNTIME.uk.md).
-Hermes v0.22.5 / Python 3.14.9 встановлено в Codex Cloud. Gateway не запущено;
-постійний безкоштовний production-маршрут NVIDIA не підтверджено.
+**Актуальний стан, активний етап, рішення і наступні кроки:** [`PROJECT_STATE.md`](PROJECT_STATE.md)
 
-**Бот ще не розгорнуто.** Перша стадія — перевірка доступів і фактичних
-безкоштовних квот. Оригінальний опис вище збережено; для погодженого текстового
-бота використовуємо штатний Telegram gateway Hermes, без Telethon і голосу.
+Це головний документ для користувача, Codex та інших AI. Якщо старий handoff або технічний звіт суперечить йому щодо поточного стану, використовуй `PROJECT_STATE.md`.
 
-- Бюджет: 0 грн. Без оплати, автопоповнення, платних резервних моделей і ресурсів,
-  безкоштовність яких залежить лише від пробних кредитів.
-- Виконання: Oracle Always Free; на ноутбук нічого не встановлюємо.
-- Модель-кандидат: DeepSeek V4.1 Flash через офіційний NVIDIA NIM. Каталог
-  повернув `deepseek-ai/deepseek-v4.1-flash`; генерація, інструменти, квоти
-  акаунта та придатність hosted trial для постійної роботи ще не підтверджені.
-- Офіційний вихідний код Hermes закріплено в [config/upstream.json](config/upstream.json).
-  Це фіксація джерела, а не підтвердження встановлення чи працездатності.
+Для Codex та інших coding agents діють сталі правила з [`AGENTS.md`](AGENTS.md).
 
-### Перевірка доступів у хмарному середовищі
+## Поточний стан коротко
 
-Потрібен лише вже наявний Python; залежності встановлювати не потрібно.
+- Прийнятий implementation checkpoint: `77f3b23d189d9f2f6581a266c6c38d4d614fe057`.
+- Hermes pinned: `v0.22.5` / `bf0203a794a07aac3ff764972ab9087baa4e4f4e`.
+- Cloud runtime і quota patch відновлені та перевірені.
+- Повний project regression: **20 PASS**.
+- Secret scan: PASS.
+- Oracle Home Region підтверджено: **Germany Central (Frankfurt), `eu-frankfurt-1`**.
+- A1 Always Free конфігурація підготовлена; реальна host capacity ще перевіряється provisioning-етапом.
+- Telegram bot існує: `@mixa_hermes_ua_bot`; gateway ще не запущений.
+- NVIDIA = **TEST ONLY**.
+- Production inference-provider навмисно **ще не обраний**: його буде визначено фактичними Hermes tool-loop і quota tests.
+- Exa залишається цільовим web-search provider; production integration ще не виконана.
 
-```bash
-cd /workspace/hermes-agent-stack
-python3 -m unittest discover -s tests -v
-python3 scripts/check_access.py
-python3 scripts/check_access.py --online
+## Що виконується зараз
+
+**L-002 — Oracle VM provisioning.**
+
+Локальний Codex створює одну Always Free A1 ARM64 VM з мінімальною конфігурацією й перевіряє тільки host basics: ARM64, Ubuntu 24.04, SSH, outbound GitHub і відсутність платних ресурсів.
+
+На цьому етапі Hermes, Docker, provider OAuth, Exa і Telegram token на VM ще не встановлюються.
+
+## Цільова схема
+
+```text
+Telegram
+   ↓
+Hermes Gateway
+   ↓
+Hermes Agent
+   ├── production inference provider (після фактичної кваліфікації)
+   ├── persistent memory/history
+   ├── Exa web search
+   └── isolated Docker tools
+
+Host: Oracle Always Free ARM64, якщо provisioning/runtime checks PASS.
 ```
 
-Остання команда виконує лише GET-запити до офіційних сторінок і, за наявності
-`NVIDIA_API_KEY`, каталогу моделей. Вона не запускає inference, пошук Exa,
-Telegram polling або створення ресурсів Oracle. Код завершення `2` означає,
-що перевірки доступу не пройдені; `0` означає лише доступ, **не готовність бота**.
+## Важливі правила
 
-[Подальші кроки, безпека та критерії готовності](docs/SETUP.uk.md).
-[Початковий історичний звіт до застосування доступів](reports/access-check.json).
+- Бюджет production: **0 грн**.
+- Немає auto-recharge, платних fallback-моделей або прихованих paid routes.
+- Hermes/runtime/models не встановлюються на Windows-ноутбук.
+- NVIDIA використовується лише для тестування.
+- Telethon і голос зараз поза scope.
+- Секрети не зберігаються у Git, чатах або звичайних логах.
+- GitHub `main` — прийнятий перевірений стан; handoff між агентами робиться через commit SHA.
+
+## Документація та докази
+
+- [`PROJECT_STATE.md`](PROJECT_STATE.md) — канонічний поточний стан, рішення, active task, roadmap і Definition of Done.
+- [`AGENTS.md`](AGENTS.md) — сталі інструкції для Codex та інших AI-агентів.
+- [`docs/L001-CONTROL-PLANE.uk.md`](docs/L001-CONTROL-PLANE.uk.md) — sanitized Oracle/Telegram/NVIDIA/Codex account precheck.
+- [`docs/C001-CHECKPOINT.uk.md`](docs/C001-CHECKPOINT.uk.md) — відновлення quota patch і 20 PASS.
+- [`docs/RUNTIME.uk.md`](docs/RUNTIME.uk.md) — cloud runtime, sandbox, guard і deployment artifacts; технічний snapshot.
+- [`docs/BACKUP-QUOTA.uk.md`](docs/BACKUP-QUOTA.uk.md) — synthetic backup/restore та quota simulations.
+- [`docs/QUOTA-PATCH.uk.md`](docs/QUOTA-PATCH.uk.md) — rationale українського quota overlay.
+- [`docs/SETUP.uk.md`](docs/SETUP.uk.md) — стабільні deployment gates, security і acceptance checklist.
+- [`config/upstream.json`](config/upstream.json) — закріплений upstream Hermes.
+
+## Коли бот вважається готовим
+
+Тільки після реального E2E на Oracle: український Telegram-діалог, 3+ повідомлення контексту, пам'ять після restart, реальний tool call, Exa з фактичними джерелами, відмова сторонньому ID, systemd/reboot, backup/restore та контрольована quota failure без оплати.
