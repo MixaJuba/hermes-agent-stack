@@ -14,11 +14,12 @@
 
 **Активне завдання:** **H-001 — encrypted off-instance disaster recovery**. Поки що реальна резервна копія лишається на тому самому Oracle boot volume. Ціль — зашифрована копія в приватному OCI Object Storage поза диском VM плюс справжнє окреме відновлення.
 
-**Поточна зупинка:** Cloud Codex виконав **H-001C offline artifacts** у гілці **cloud/h001c-offsite-dr-artifacts**, повідомив про 39 regression PASS; на час цього зрізу HEAD гілки **4fd5cd2a1906c45a14b93b948ac37d3b51f98fe8**. Координатор переглянув код та **повернув CHANGES REQUESTED**: у scripts/offsite_backup.py та scripts/offsite_restore.py відповіді OCI CLI object HEAD обробляються через припущення про вкладений ключ data, яке треба звірити з реальним документованим JSON OCI CLI; offline mocks це приховують. Власник уже передав Хмарному corrective prompt, і той працює. **Не приймати H-001C та не передавати Локальному для rollout, поки новий commit не перевірено.** Після виправлення — coordinator review, потім окремий контрольований Local Codex live qualification.
+**Поточна зупинка (оновлено після coordinator review):** Cloud Codex виправив H-001C у SHA **14e4da3c5b4683639b6647560295f0c24c0dab22**: OCI CLI HEAD тепер читається як плоский JSON, спільна перевірка застосовується до backup/restore, додані негативні тести та offline orchestrator. Cloud заявив 13 вузьких PASS і 42/42 full regression; координатор **особисто перевірив GitHub source/diff та офіційний OCI CLI contract**, але не запускав наявне Hermes PM середовище незалежно. Статус **OFFLINE CODE REVIEW CONDITIONAL PASS; LIVE NOT QUALIFIED**. Створено [draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1), **не merged**. Для ввімкнення щоденного таймера необхідні локальна політика для накопичуваних незашифрованих ZIP і перевірюваний зовнішній recovery record/key custody. Live gate Локального ще не стартував.
 
-**GitHub на момент зрізу:**
-- main: **247b0ccd3051a6b057951d99552d58f15aff5222** — прийнятий стан + H-001 design.
-- cloud/h001c-offsite-dr-artifacts: **4fd5cd2a1906c45a14b93b948ac37d3b51f98fe8** — ПОКИ НЕ ПРИЙНЯТА реалізація; новий commit очікується.
+**GitHub після перевірки H-001C:**
+- main перед цим оновленням handoff: **dcb62fb713ca11c8f04e1770edf4a27082d94e6d** — прийнятий L-006F baseline, H-001 design і перша версія handoff. Git main SHA зміниться після цього документа: завжди re-fetch.
+- cloud/h001c-offsite-dr-artifacts: **14e4da3c5b4683639b6647560295f0c24c0dab22** — offline reviewed, але не live qualified / не merged.
+- [draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) — підготовлений review/merge gate, не автоматичне прийняття в production.
 - Production Oracle runtime під час H-001C **не змінювали**, згідно із заявою Cloud Codex. Прямий поточний SSH-аудит у цьому чаті не проводився.
 - Даний документ не означає H-001 PASS.
 
@@ -123,7 +124,7 @@ Hermes Agent, Oracle Always Free VM, Ubuntu ARM64
 | L-005 | PASS | Exa Free, payment absent, PAYGO disabled, keyed search + extract live. |
 | L-006F | **PRODUCTION_READY / ACCEPTED** | Telegram E2E, owner-only, one poller, 3 turns, memory після restart/reboot, real terminal tool, Exa через Telegram, backup/isolated restore. |
 | H-001 | **IN PROGRESS** | Off-instance encrypted disaster recovery, не введено в production. |
-| H-001C | **CHANGES REQUESTED на момент зрізу** | Cloud code/tests готові offline у branch, координатор повернув на уточнення OCI HEAD response. |
+| H-001C | **OFFLINE CODE REVIEW CONDITIONAL PASS; LIVE NOT QUALIFIED** | Виправлено flat OCI HEAD у SHA 14e4da3c…; 13 вузьких + 42 full PASS за Cloud report; draft PR #1 лишається не merged. |
 
 **Конкретні результати L-006F:** Telegram smoke HERMES_TELEGRAM_OK; 3-turn context marker 4817 → 4817 → 4822; terminal tool HERMES_FINAL_OK; memory survives service restart and real VM reboot; один poller; web search повернув https://github.com/nousresearch/hermes-agent/; local backup 419 files, приблизно 1.9 MB, mode 0600, isolated restore підтвердив memory/session/history/config.
 
@@ -139,15 +140,15 @@ Hermes Agent, Oracle Always Free VM, Ubuntu ARM64
 
 **Що зроблено Хмарним до review:** у branch створено scripts/offsite_backup.py, scripts/offsite_restore.py, scripts/offsite_native.py, config/offsite-backup.example.json, deploy/hermes-backup-offsite.{service,timer}, tests/check_offsite_backup.py, tests/test_offsite_backup.py, docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md та reports/h001c-offline.json; змінено README/PROJECT_STATE **лише у branch**. Звіт Cloud: 10 вузьких тестів + real native isolated synthetic restore PASS, full regression 39 PASS після корекції runtime paths; age/OCI stubbed, real network/live не тестували; timer NOT ACTIVATED.
 
-**Що не прийнято:** код HEAD очікує nested response ['data'] для OCI CLI object head. Координатор надіслав correction prompt: перевірити офіційний OCI CLI JSON, виправити backup/restore і mocks, переглянути повний OCI CLI потік, повторити regression і secret scan, залишитися в тій самій branch. На момент цього handoff **нового SHA ще не надано**. Наявність подальшого commit необхідно звірити з актуальною гілкою; не стверджувати, що проблему виправлено, лише за датою чи повідомленням Codex.
+**Review correction:** старий дефект HEAD через nested ['data'] **виправлено** в SHA **14e4da3c5b4683639b6647560295f0c24c0dab22**. Успішно звірено source з офіційною документацією OCI: flat headers, user metadata opc-meta-*, file-based get. Cloud повідомив 13 narrow PASS, 42/42 regression PASS; координатор перевірив GitHub, але **не запускав ці тести самостійно**. Для запуску на Oracle ще потрібні реальний OCI/age E2E, ключ, IAM, free-tier/billing check. До активації timer — політика очищення нових raw ZIP без видалення останнього надійного local backup, обмеження росту диску і незалежний recovery record поза VM. [Draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) не злитий.
 
 **Порядок відновлення роботи:**
-1. Прочитати актуальний GitHub main + PROJECT_STATE, AGENTS, H-001 design, current Cloud branch та diff після 4fd5cd2….
-2. Отримати/знайти **новий Cloud SHA** і звіт із виправленням; перевірити код, OCI contract, тести, безпеку restore і regression самостійно.
-3. Якщо FAIL — повернути CHANGES REQUESTED, не merge і не live rollout.
-4. Якщо PASS — прийняти offline H-001C через review/PR або безпечний fast-forward за актуального main. Main може просунутися після цього handoff; **не force-push**.
-5. Лише тоді дати Локальному вузький H-001 live qualification: live Oracle Free allowance/billing, key custody, least privilege IAM, real age encryption, OCI put/head/get, verified checksum, isolated native restore без другого poller.
-6. Після реального PASS — вирішити щоденне безкоштовне планове копіювання, retention/monitoring; оновити PROJECT_STATE і handoff. Якщо є ризик витрат чи втрати секретного ключа — STOP.
+1. Прочитати актуальні GitHub main/PROJECT_STATE/AGENTS і [draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1); перевірити, чи head H-001C досі 14e4da3c… або змінився.
+2. Офіційний OCI CLI HEAD/PUT/GET contract і diff після 4fd5cd2… вже переглянуті координатором; **не повторювати все без причини**, але перевірити будь-які нові зміни.
+3. Визначити порядок безпечного прийняття PR у main із новим PROJECT_HANDOFF.md (main і Cloud branch розійшлися). Не force-push; не видавати draft PR за merge.
+4. Перед live rollout дати Локальному окремий read-only preflight: actual OCI Free usage/billing, installed age/oci CLI availability/version, IAM feasibility, key custody і recovery record поза VM. Якщо ризик оплачуваного ресурсу — STOP.
+5. Після accepted code / security preflight виконати **один контрольований** real age+OCI upload/HEAD/get+isolated native restore; не змінювати Hermes provider/model, Telegram, gateway; не створювати другого poller.
+6. До активації щоденного timer окремо перевірити/впровадити bounded raw-ZIP retention та disk/storage monitoring. Після реального PASS оновити PROJECT_STATE і цей handoff.
 
 **Після H-001:** окремий zero-cost monitoring/alerts gate без другого poller, потім функціональні покращення Telegram-агента за пріоритетами власника.
 
@@ -241,10 +242,10 @@ ChatGPT Projects можуть використовувати файли та і�
 
 ### Коротка стартова фраза для нового чату
 
-> Продовжуємо ChatGPT Command Center / Hermes Agent. Ти головний координатор. Прочитай прикріплений PROJECT_HANDOFF.md та АКТУАЛЬНІ PROJECT_STATE.md і AGENTS.md у GitHub MixaJuba/hermes-agent-stack. Перевір main і cloud/h001c-offsite-dr-artifacts, не приймай старі SHA за актуальні. L-006F production baseline прийнятий; H-001C після offline PASS повернуто на виправлення обробки OCI HEAD, і Хмарний Codex готує новий commit. Після перевірки нового коду виріши, чи можна переходити до Local Codex live qualification. Не змінюй живий бот, провайдерів, секрети чи main без перевірки. Пояснюй мені коротко і просто; всю технічну роботу координуй сам.
+> Продовжуємо ChatGPT Command Center / Hermes Agent. Ти головний координатор. Прочитай прикріплений PROJECT_HANDOFF.md та АКТУАЛЬНІ PROJECT_STATE.md і AGENTS.md у GitHub MixaJuba/hermes-agent-stack. Перевір main і cloud/h001c-offsite-dr-artifacts, не приймай старі SHA за актуальні. L-006F production baseline прийнятий; H-001C OCI HEAD уже виправлений у 14e4da3c…, coordinator offline code review — conditional PASS. Перевір draft PR #1, актуальний main та незакриті умови (raw ZIP, recovery record/key custody, real OCI/age/free billing), підготуй контрольований Local Codex read-only preflight і не оголошуй H-001 live PASS. Не змінюй живий бот, провайдерів, секрети чи main без перевірки. Пояснюй мені коротко і просто; всю технічну роботу координуй сам.
 
 ---
 
-**Ключова перевірка на вході:** чи з'явився новий SHA H-001C після coordinator CHANGES REQUESTED? Якщо так — починати з diff і тестів, а не з повторного планування H-001.
+**Ключова перевірка на вході:** поточний H-001C branch SHA / draft PR #1 vs актуальний main; чи є live OCI/age preflight та умови збереження recovery key і маніфесту. Не вважати review PR за live rollout.
 
 **Оновлення документа:** після кожного прийнятого milestone або суттєвої зміни відповідальних/обмежень; публічний файл ніколи не повинен містити реальні credentials чи приватні дані.
