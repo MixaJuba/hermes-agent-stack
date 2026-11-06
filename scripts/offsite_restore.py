@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import stat
 import subprocess
-from offsite_backup import load_config, preflight, oci, run, digest, native, LIVE, remote_metadata
+from offsite_backup import load_config, preflight, oci, run, digest, native, LIVE, validate_head
 
 
 def target_valid(c, target):
@@ -37,11 +37,10 @@ def restore(c, target, identity, name, expected_sha):
     import tempfile
     with tempfile.TemporaryDirectory(prefix='dr-stage-',dir=target.parent) as tmp:
         encrypted=Path(tmp)/'backup.age'; raw=Path(tmp)/'backup.zip'
-        check=oci(c,'head','--name',name)['data']
-        if remote_metadata(check).get('sha256')!=expected_sha:
-            raise ValueError('Remote metadata checksum mismatch')
+        size=validate_head(oci(c,'head','--name',name),expected_sha)
         oci(c,'get','--name',name,'--file',str(encrypted))
-        if digest(encrypted)!=expected_sha:
+        if (not encrypted.is_file() or encrypted.is_symlink()
+                or encrypted.stat().st_size!=size or digest(encrypted)!=expected_sha):
             raise ValueError('Encrypted checksum mismatch')
         run(['age','--decrypt','--identity',str(key),'--output',str(raw),str(encrypted)])
         target.mkdir(mode=0o700,exist_ok=True)

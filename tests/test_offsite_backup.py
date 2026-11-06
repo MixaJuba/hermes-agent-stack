@@ -15,6 +15,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 import offsite_backup as b
 import offsite_restore as r
+from offsite_cli_stub import OfflineCLI
 
 
 def recipient():
@@ -57,7 +58,8 @@ class OffsiteTests(unittest.TestCase):
             self.upload=Path(args[args.index('--file')+1]); self.assertTrue(self.upload.name.endswith('.zip.age'))
             self.assertTrue(self.upload.read_bytes().startswith(b'age-encryption.org/v1'))
             self.meta=json.loads(args[args.index('--metadata')+1]); return {}
-        return {'data':{'content-length':self.upload.stat().st_size,'opc-meta':self.meta}}
+        return {'content-length':str(self.upload.stat().st_size),'etag':'synthetic-etag',
+                **{'opc-meta-'+k:v for k,v in self.meta.items()}}
 
     def perform(self):
         with patch.object(b,'native',side_effect=self.native),patch.object(b,'run',side_effect=self.age),patch.object(b,'oci',side_effect=self.storage):
@@ -101,7 +103,7 @@ class OffsiteTests(unittest.TestCase):
 
     def test_remote_mismatch_and_verification_failure_rejected(self):
         self.perform()
-        with patch.object(b,'oci',return_value={'data':{'content-length':1,'opc-meta':{}}}),self.assertRaises(ValueError):
+        with patch.object(b,'oci',return_value={'content-length':'1'}),self.assertRaises(ValueError):
             b.check_remote(self.c,'name','0'*64,20)
         with patch.object(b,'oci',side_effect=RuntimeError('HEAD fail')),self.assertRaises(RuntimeError):
             b.check_remote(self.c,'name','0'*64,20)
@@ -125,9 +127,70 @@ class OffsiteTests(unittest.TestCase):
 
     def test_restore_checksum_prevents_decrypt(self):
         key=self.root/'temporary-test-identity'; key.write_text('SYNTHETIC NOT A PRIVATE KEY'); key.chmod(0o600)
-        with patch.object(r,'oci',side_effect=[{'data':{'opc-meta':{'sha256':'0'*64}}},{}]),patch.object(r,'digest',return_value='1'*64),patch.object(r,'run') as age:
+        headers={'content-length':'1','opc-meta-sha256':'0'*64,'opc-meta-format':'hermes-age-v1'}
+        def download(c,*args):
+            if args[0]=='head': return headers
+            Path(args[args.index('--file')+1]).write_bytes(b'x')
+            return {}
+        with patch.object(r,'oci',side_effect=download),patch.object(r,'digest',return_value='1'*64),patch.object(r,'run') as age:
             with self.assertRaises(ValueError): r.restore(self.c,Path(self.c['restore_root'])/'restore-test',key,'hermes-backups/synthetic.zip.age','0'*64)
             age.assert_not_called()
+
+    def test_flat_head_contract_and_fail_closed_shapes(self):
+        headers={'content-length':'42','etag':'synthetic-etag',
+                 'opc-meta-sha256':'0'*64,'opc-meta-format':'hermes-age-v1'}
+        self.assertEqual(b.validate_head(headers,'0'*64,42),42)
+        self.assertEqual(b.validate_head({k.upper():v for k,v in headers.items()},'0'*64),42)
+        bad=[{'data':headers}, [], {}, {**headers,'opc-meta-sha256':'1'*64},
+             {**headers,'opc-meta-format':'raw'},
+             {**headers,'Content-Length':'42'},
+             {'content-length':'42','opc-meta':{'sha256':'0'*64,'format':'hermes-age-v1'}}]
+        for length in (None,True,-1,0,'-1','1.5','not-a-size',[]):
+            bad.append({**headers,'content-length':length})
+        for response in bad:
+            with self.subTest(response=response),self.assertRaises(ValueError):
+                b.validate_head(response,'0'*64)
+        with self.assertRaises(ValueError): b.validate_head(headers,'0'*64,43)
+
+    def test_cli_json_response_shapes(self):
+        for output in (b'',b'{}',b'{"etag":"synthetic"}'):
+            with patch.object(b,'run',return_value=output):
+                self.assertIsInstance(b.oci(self.c,'get','--name','synthetic','--file','unused'),dict)
+        for output in (b'[]',b'null',b'not-json'):
+            with patch.object(b,'run',return_value=output),self.assertRaises(ValueError):
+                b.oci(self.c,'head','--name','synthetic')
+
+    def test_cli_put_head_get_checksum_decrypt_restore_contract(self):
+        cli=OfflineCLI()
+        key=self.root/'temporary-test-identity'; key.write_text('SYNTHETIC NOT A PRIVATE KEY'); key.chmod(0o600)
+        def native(c,action,home,archive):
+            if action=='backup': self.native(c,action,home,archive)
+            else:
+                self.assertEqual(archive.read_bytes(),b'synthetic raw')
+                self.assertEqual(list(home.iterdir()),[])
+                (home/'synthetic-restored').write_text('verified')
+        with patch.object(b,'run',side_effect=cli.run),patch.object(r,'run',side_effect=cli.run), \
+                patch.object(b,'native',side_effect=native),patch.object(r,'native',side_effect=native):
+            result=b.backup(self.c)
+            target=Path(self.c['restore_root'])/'restore-contract'
+            r.restore(self.c,target,key,result['object'],result['sha256'])
+            self.assertEqual((target/'synthetic-restored').read_text(),'verified')
+            self.assertEqual(cli.events,['encrypt','put','head','head','get','decrypt'])
+            # GET stdout may also contain JSON headers; never use it as object bytes.
+            cli.get_stdout=b'{"content-length":"synthetic-header-only"}'
+            r.restore(self.c,Path(self.c['restore_root'])/'restore-json',key,result['object'],result['sha256'])
+            cli.corrupt_download=True
+            before=len(cli.events)
+            with self.assertRaises(ValueError):
+                r.restore(self.c,Path(self.c['restore_root'])/'restore-corrupt',key,result['object'],result['sha256'])
+            self.assertEqual(cli.events[before:],['head','get'])
+            cli.corrupt_download=False
+            # HEAD must verify format too, before download or decrypt.
+            cli.objects[result['object']][1]['format']='raw'
+            before=len(cli.events)
+            with self.assertRaises(ValueError):
+                r.restore(self.c,Path(self.c['restore_root'])/'restore-format',key,result['object'],result['sha256'])
+            self.assertEqual(cli.events[before:],['head'])
 
     def test_systemd_sanity(self):
         service=(ROOT/'deploy/hermes-backup-offsite.service').read_text(); timer=(ROOT/'deploy/hermes-backup-offsite.timer').read_text()

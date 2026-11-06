@@ -221,3 +221,9 @@ Build-gates для першого production baseline закриті. Проєк
 ## H-001C — offline artifacts
 
 Підготовлено native backup → mandatory age encryption → SHA256 → instance-principal OCI put/HEAD та isolated restore helpers, неактивовані daily systemd templates й offline tests. Live runtime не змінено. H-001 НЕ завершено; bucket/IAM/key custody/real remote recovery залишаються Local Codex qualification після acceptance. Деталі: [implementation](docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md).
+
+Coordinator review виявив помилковий вкладений HEAD у helpers і старих test stubs.
+H-001C correction використовує документований flat JSON / `opc-meta-*`; offline
+orchestrator roundtrip перевіряє put/HEAD/get/checksum/decrypt із реальним native
+backup/import. Фінальні результати — [report](reports/h001c-offline.json).
+Це виправлення artifacts для review; live OCI/age qualification ще НЕ виконана.

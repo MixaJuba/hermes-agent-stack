@@ -2,13 +2,13 @@
   "task": "H-001C",
   "base_sha": "247b0ccd3051a6b057951d99552d58f15aff5222",
   "status": "OFFLINE PASS; H-001 live qualification pending",
-  "narrow_tests": 10,
-  "native_offsite_import": "PASS real extraction/config/memory/sessions/messages; only revival callback suppressed",
+  "narrow_tests": 13,
+  "native_offsite_import": "PASS full backup/put/flat HEAD/get/checksum/decrypt/isolated native import orchestrator; stub age/OCI subprocesses; real extraction/config/memory/sessions/messages; only revival callback suppressed",
   "existing_backup_regression": "PASS",
   "production_guard_tests": 10,
   "production_config_tests": 7,
-  "full_regression_tests": 39,
-  "full_regression_runs": 2,
+  "full_regression_tests": 42,
+  "full_regression_runs": 3,
   "secret_scan": "PASS",
   "age_and_oci": "stubbed offline; actual tools/cryptography/API not yet qualified",
   "oci_auth": "instance_principal only; static env rejected; config file /dev/null",
@@ -20,5 +20,41 @@
   "network_used": false,
   "github_network": "sync and branch push only",
   "production_runtime_changed": false,
-  "regression_repeat_reason": "Relevant deployment-path fix after first PASS: explicit non-secret Oracle source/tools paths, avoiding Cloud defaults"
+  "regression_repeat_reason": "Relevant deployment-path fix after first PASS: explicit non-secret Oracle source/tools paths, avoiding Cloud defaults",
+  "previous_results_before_coordinator_correction": {
+    "narrow_tests": 10,
+    "full_regression_tests": 39,
+    "full_regression_runs": 2,
+    "regression_repeat_reason": "Relevant deployment-path fix after first PASS: explicit non-secret Oracle source/tools paths, avoiding Cloud defaults"
+  },
+  "coordinator_review_correction": {
+    "reviewed_sha": "4fd5cd2a1906c45a14b93b948ac37d3b51f98fe8",
+    "root_cause": "Backup and restore read invented nested HEAD data; prior stubs mirrored this defect",
+    "head_contract": "Flat JSON response headers: content-length, etag, individual opc-meta-* user metadata; no data wrapper",
+    "official_reference": "https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/cmdref/os/object/head.html",
+    "additional_hardening": [
+      "Explicit OCI JSON output and object response validation",
+      "Restore verifies HEAD format/SHA/length and downloaded regular file/length/SHA before decrypt"
+    ],
+    "narrow_command": "python3 -m unittest discover -s tests -p test_offsite_backup.py -v",
+    "narrow_tests": 13,
+    "narrow_result": "PASS",
+    "native_command": "python3 scripts/hermes_runtime.py python -- /workspace/hermes-agent-stack/tests/check_offsite_backup.py",
+    "native_orchestrator": "PASS; real native backup/import; CLI subprocess/age stubbed; fresh-process state and permissions verified; no network",
+    "native_launch_boundary": "Synthetic home reuses already selected PM interpreter; no install records/runtime/credentials copied into it",
+    "full_regression_command": "python3 -m unittest discover -s tests -p test_*.py -v",
+    "full_regression_tests": 42,
+    "full_regression_runs": 1,
+    "full_regression_result": "PASS",
+    "network_tripwire": "Python socket.connect/create_connection forbidden in full suite and child processes; native workers also forbid sockets",
+    "negative_cases": [
+      "Old nested HEAD/data or nested opc-meta rejected",
+      "Missing/malformed/ambiguous headers rejected",
+      "Wrong size/SHA/format rejected",
+      "Corrupt downloaded bytes never decrypted",
+      "JSON or empty GET stdout never used as downloaded payload"
+    ],
+    "live_qualified": false,
+    "status": "READY_FOR_COORDINATOR_REVIEW"
+  }
 }

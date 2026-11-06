@@ -66,11 +66,14 @@ def run(args, *, env=None):
 def oci(c, *args):
     # No inherited credentials, proxies, user profile, key paths, or arbitrary CLI arguments.
     env = {k: os.environ[k] for k in ('PATH', 'LANG', 'SSL_CERT_FILE') if k in os.environ}
-    output = run(['oci', '--auth', 'instance_principal', '--region', c['region'],
+    output = run(['oci', '--output', 'json', '--auth', 'instance_principal', '--region', c['region'],
                            '--config-file', '/dev/null', '--max-retries', '0', '--connection-timeout', '15', '--read-timeout', '60',
                            'os', 'object', *args, '--namespace-name', c['namespace'],
                            '--bucket-name', c['bucket']], env=env)
-    return json.loads(output or b'{}')
+    result = json.loads(output or b'{}')
+    if not isinstance(result, dict):
+        raise ValueError('Unexpected OCI CLI response shape')
+    return result
 
 
 def digest(path):
@@ -88,16 +91,33 @@ def native(c, action, home, archive):
 
 
 def remote_metadata(data):
-    return data.get('opc-meta') or {k.removeprefix('opc-meta-'): v for k, v in data.items() if k.startswith('opc-meta-')}
+    # `oci os object head` serializes response HEADERS directly, not under data.
+    # --metadata on put becomes individual opc-meta-* headers on head/get.
+    return {k.removeprefix('opc-meta-'): v for k, v in data.items() if k.startswith('opc-meta-')}
+
+
+def validate_head(data, sha, size=None):
+    if not isinstance(data, dict) or any(not isinstance(k, str) for k in data):
+        raise ValueError('Unexpected OCI HEAD response shape')
+    # HTTP header names are case-insensitive; ambiguous duplicates fail closed.
+    headers = {k.lower(): v for k, v in data.items()}
+    if len(headers) != len(data):
+        raise ValueError('Ambiguous OCI HEAD headers')
+    length = headers.get('content-length')
+    if (type(length) not in (int, str) or not re.fullmatch(r'[0-9]+', str(length))
+            or int(length) <= 0):
+        raise ValueError('Missing/invalid OCI HEAD content length')
+    metadata = remote_metadata(headers)
+    if ((size is not None and int(length) != size) or metadata.get('sha256') != sha
+            or metadata.get('format') != 'hermes-age-v1'):
+        raise ValueError('Remote HEAD integrity metadata/size mismatch')
+    return int(length)
 
 
 def check_remote(c, name, sha, size):
-    d = oci(c, 'head', '--name', name)['data']
-    metadata = remote_metadata(d)
-    if (str(d.get('content-length')) != str(size) or metadata.get('sha256') != sha
-            or metadata.get('format') != 'hermes-age-v1'):
-        raise ValueError('Remote HEAD integrity metadata/size mismatch')
-    return d
+    data = oci(c, 'head', '--name', name)
+    validate_head(data, sha, size)
+    return data
 
 
 def backup(c):

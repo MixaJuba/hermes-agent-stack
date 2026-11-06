@@ -17,7 +17,7 @@ Standard tier, sanitized format/timestamp/SHA/Hermes metadata. Після put
 обов'язковий HEAD: encrypted size, SHA та format. SHA metadata — integrity
 check, не заміна age authentication чи позаоб'єктного trusted recovery digest.
 
-OCI CLI: explicit `--auth instance_principal`, `--config-file /dev/null`,
+OCI CLI: explicit `--output json`, `--auth instance_principal`, `--config-file /dev/null`,
 `--max-retries 0`, bounded timeouts. OCI environment overrides відхиляються;
 CLI subprocess має allowlisted environment без user credentials/proxies.
 Немає API signing key, auth token, public/PAR URL чи login. Service не підтягує
@@ -35,11 +35,37 @@ memories, SQLite integrity й рівність sessions/messages з archive. Н�
 із зовнішнім memory storage/profiles потребують окремого review, не blind import.
 Невдала спроба може лишити partial isolated target; повторний запуск його відхилить.
 
+HEAD читається як **плоский JSON заголовків**, з `content-length` і окремими
+`opc-meta-sha256` / `opc-meta-format`; вкладений `data` або `opc-meta` не є
+підтвердженням цілісності. Регістр назв заголовків неважливий; неоднозначні дублікати,
+відсутні/некоректні length, SHA або format відхиляються. Restore перевіряє HEAD
+до get, потім regular downloaded file, розмір і trusted SHA **до decrypt**.
+GET пише object bytes у `--file`; stdout не використовується як вміст backup.
+Порожній stdout або JSON headers допускаються; не-JSON/не-object response — відмова.
+
 Tests: stubbed age/OCI pipeline, fail-closed config/auth, encrypted-only upload,
 checksum/HEAD, retention при failure, unsafe targets, systemd static verify;
-окремий native roundtrip із синтетичним фактом/3 повідомленнями. External socket
+окремий повний orchestrator roundtrip із синтетичним фактом/3 повідомленнями:
+real native backup → stub age → real CLI adapter / stub subprocess response
+put → flat HEAD → get → checksum → stub decrypt → real native isolated import.
+Для disposable home worker використовує вже вибраний PM interpreter, без копіювання
+installation records або перевстановлення runtime. Нативні extraction/memory/history/
+config не підмінені; fresh-process verification підтверджує відновлені дані/права.
+External socket
 tripwire активний; справжніх age keys, OCI або network calls у тестах немає.
 Stub ciphertext **не є доказом криптографічної працездатності age**.
+
+### Coordinator review correction
+
+Попередній commit `4fd5cd2a1906c45a14b93b948ac37d3b51f98fe8` помилково
+читав HEAD через `['data']`; попередні stubs відтворювали цю ж неправильну
+передумову. Їхній PASS не доводив сумісність із фактичним CLI HEAD.
+Виправлено обидва helpers; спільна перевірка HEAD використовується і для upload,
+і для restore. Нова fixture перевіряє аргументи CLI, flat user metadata, file-based
+get, empty/header-only stdout, а також corruption і format/size mismatch.
+Офіційний контракт: [OCI CLI object head](https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/cmdref/os/object/head.html).
+Це offline contract verification, **не запуск установленого OCI CLI проти Oracle**.
+Фактичні результати: [sanitized report](../reports/h001c-offline.json).
 
 ## PLANNED LIVE — тільки Local Codex після acceptance
 
@@ -90,7 +116,7 @@ Private identity ніколи не передавати literal value у CLI/his
 
 ## NOT YET VERIFIED
 
-Real age encryption/decryption; actual CLI/OCI HEAD header representation,
+Real age encryption/decryption; actual installed CLI/OCI put/HEAD/get execution,
 IAM/instance principal/bootstrap metadata access, bucket private/Standard/versioning,
 zero-cost account allowance/growth, real remote recovery та live timer activation.
 Cloud artifacts не доводять live H-001 PASS. Tenancy loss залишається residual risk.
