@@ -220,7 +220,7 @@ Build-gates для першого production baseline закриті. Проєк
 6. зібрати sanitized evidence;
 7. тільки після coordinator acceptance переносити зміну в production.
 
-## H-001C — offline artifacts
+## H-001C — offline artifacts (історична точка до H-001L3)
 
 Підготовлено native backup → mandatory age encryption → SHA256 → instance-principal OCI put/HEAD та isolated restore helpers, неактивовані daily systemd templates й offline tests. Live runtime не змінено. H-001 НЕ завершено; bucket/IAM/key custody/real remote recovery залишаються Local Codex qualification після acceptance. Деталі: [implementation](docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md).
 

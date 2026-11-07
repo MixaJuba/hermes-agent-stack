@@ -110,7 +110,7 @@ get, empty/header-only stdout, а також corruption і format/size mismatch.
 Це offline contract verification, **не запуск установленого OCI CLI проти Oracle**.
 Фактичні результати: [sanitized report](../reports/h001c-offline.json).
 
-## PLANNED LIVE — тільки Local Codex після acceptance
+## Історичний план Local live qualification (одноразова перевірка виконана за звітом H-001L3)
 
 1. Перевірити actual Always Free usage/20 GB aggregate allowance та API allowance.
 2. Створити private **Standard** bucket, versioning ENABLED, retention NONE,
