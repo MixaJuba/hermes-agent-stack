@@ -2,7 +2,7 @@
 
 > Єдине джерело правди про поточний production-стан, прийняті рішення, межі доказу та правила наступних змін.
 
-Оновлено: **2 листопада 2026 року**.
+Оновлено: **7 листопада 2026 року**.
 
 ## 1. Загальний статус
 
@@ -228,22 +228,26 @@ orchestrator roundtrip перевіряє put/HEAD/get/checksum/decrypt із р�
 backup/import. Фінальні результати — [report](reports/h001c-offline.json).
 Це виправлення artifacts для review; live OCI/age qualification ще НЕ виконана.
 
-### H-001C-FINAL — recovery readiness proposal (7 листопада 2026)
+### H-001C-FINAL — offline source ACCEPTED (7 листопада 2026)
 
-Звірено canonical main `fdcabe9944b1aef24ecbcf3ed22d1a31e38e246b`, його
-PROJECT_HANDOFF і draft PR #1 без зміни main/handoff. За прийнятими L-007A/L-007S:
+H-001C source прийнято координатором після GitHub code review і злито через
+[PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1), GitHub merge commit
+`7369dee839464e2cdf8e2f0f94d362317e6ff704`. Це GitHub/code acceptance,
+**не deployment на Oracle** і не live H-001 qualification. За прийнятими L-007A/L-007S:
 код export відповідав перевіреному Git tree; новий одноразовий full backup створено
 7 листопада на тій самій VM, restore нового ZIP не виконувався, off-instance copy
 відсутня. Повторний аудит/backup не потрібний до нового реального gate.
 
-У branch підготовлено bounded raw rotation із захистом latest verified/legacy
+У прийнятому main підготовлено bounded raw rotation із захистом latest verified/legacy
 copies, caps/free-space checks і lock; [recovery runbook](docs/RECOVERY-RUNBOOK.uk.md)
 закриває документаційні G1–G4, включно з code-export attestation та зовнішнім
-key/record custody. Це **proposal для coordinator review**, не прийняття PR або
-live H-001. Наступний Local gate після acceptance — безкоштовність/IAM/custody
-preflight й один real age/OCI upload/HEAD/get/native isolated restore без зміни
+key/record custody. Це **accepted offline code**, а не live H-001. Наступний Local gate —
+безкоштовність/IAM/custody preflight і після окремого дозволу один real age/OCI
+upload/HEAD/get/native isolated restore без зміни
 працюючого gateway. Timer до live PASS не активувати.
 
 Offline verification H-001C-FINAL: 18 offsite + 3 recovery-readiness tests PASS;
 native synthetic orchestrator PASS; один final regression 50/50 PASS.
 Sanitized evidence: [h001c-final-readiness.json](reports/h001c-final-readiness.json).
+
+**Latest safety boundary:** L-007S fresh local ZIP (2026-11-07) verified by Local report, not restored; legacy local backups protected; no confirmed off-VM copy. `age`/OCI CLI/IAM and private key custody not yet qualified; billing trial discrepancy unresolved. No systemd timer activated. Coordinator reviewed code/diffs/documentation and upstream Hermes backup exclusion policy; Cloud reported 50/50 tests, coordinator did not independently run Hermes regression or live Oracle. Local next step must stop on any unclear cost, missing independent key custody or unauthorized resource creation.
