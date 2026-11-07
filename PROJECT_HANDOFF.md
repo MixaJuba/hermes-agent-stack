@@ -14,14 +14,13 @@
 
 **Активне завдання:** **H-001 — encrypted off-instance disaster recovery**. Поки що реальна резервна копія лишається на тому самому Oracle boot volume. Ціль — зашифрована копія в приватному OCI Object Storage поза диском VM плюс справжнє окреме відновлення.
 
-**Поточна зупинка (оновлено після coordinator review):** Cloud Codex виправив H-001C у SHA **14e4da3c5b4683639b6647560295f0c24c0dab22**: OCI CLI HEAD тепер читається як плоский JSON, спільна перевірка застосовується до backup/restore, додані негативні тести та offline orchestrator. Cloud заявив 13 вузьких PASS і 42/42 full regression; координатор **особисто перевірив GitHub source/diff та офіційний OCI CLI contract**, але не запускав наявне Hermes PM середовище незалежно. Статус **OFFLINE CODE REVIEW CONDITIONAL PASS; LIVE NOT QUALIFIED**. Створено [draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1), **не merged**. Для ввімкнення щоденного таймера необхідні локальна політика для накопичуваних незашифрованих ZIP і перевірюваний зовнішній recovery record/key custody. Live gate Локального ще не стартував.
+**Поточний статус:** **H-001C-FINAL offline source ACCEPTED.** Координатор перевірив source, тести, runbook і ризики. Cloud Codex повідомив **21 targeted PASS, 50/50 full regression PASS, synthetic native roundtrip PASS**; сам координатор не запускав увесь тестовий набір у Hermes runtime й не робив live Oracle перевірок. [PR №1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) **злито в main**: merge commit `7369dee839464e2cdf8e2f0f94d362317e6ff704`, Cloud head `a6b0b1d190b78d9e7dbdfe87f121cc75fa87a049`. Документаційні G1–G4, правила обмеження raw ZIP і зовнішній recovery-record template тепер у GitHub main.
 
-**GitHub після перевірки H-001C:**
-- main перед цим оновленням handoff: **dcb62fb713ca11c8f04e1770edf4a27082d94e6d** — прийнятий L-006F baseline, H-001 design і перша версія handoff. Git main SHA зміниться після цього документа: завжди re-fetch.
-- cloud/h001c-offsite-dr-artifacts: **14e4da3c5b4683639b6647560295f0c24c0dab22** — offline reviewed, але не live qualified / не merged.
-- [draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) — підготовлений review/merge gate, не автоматичне прийняття в production.
-- Production Oracle runtime під час H-001C **не змінювали**, згідно із заявою Cloud Codex. Прямий поточний SSH-аудит у цьому чаті не проводився.
-- Даний документ не означає H-001 PASS.
+**Важлива межа:** GitHub merge **НЕ ЗМІНИВ Telegram/Oracle production**. Після L-007S є один новий native local ZIP, створений 7 листопада, CRC/склад перевірені; isolated restore саме цього ZIP не виконувався. Off-VM copy відсутня, live age/OCI, free-billing, IAM, незалежні ключі й remote restore **NOT QUALIFIED**. Timer OFF. Не перевстановлювати працюючий Hermes лише через новий GitHub SHA.
+
+**Наступний gate:** Local Codex перевіряє реальні безкоштовні умови Oracle, доступність незалежного ключа/recovery record, кваліфіковані age/OCI та найвужчі IAM permissions. На невідомих витратах чи неможливості безпечно зберігати ключ — STOP. За чітких дозволів — один real encrypted upload/HEAD/get та isolated native restore, без reboot/gateway changes. До live PASS автоматичний timer не вмикати.
+
+**GitHub:** поточний main перевіряти live, бо після H-001C merge координатор оновлював PROJECT_STATE.md та цей handoff; попередні SHA/PR-draft згадки в історії є історичними, не чинним статусом.
 
 ## 1. Навіщо проєкт існує і як виглядає успіх
 
