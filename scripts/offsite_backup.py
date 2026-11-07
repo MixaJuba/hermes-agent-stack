@@ -197,7 +197,7 @@ def check_remote(c, name, sha, size):
     return data
 
 
-def backup(c):
+def backup(c, *, no_multipart=False, before_upload=None):
     preflight()
     os.umask(0o077)
     directory = Path(c['local_dir'])
@@ -212,10 +212,10 @@ def backup(c):
         except BlockingIOError:
             raise ValueError('Another offsite backup is active') from None
         storage_budget(c, directory)
-        return backup_locked(c, directory)
+        return backup_locked(c, directory, no_multipart=no_multipart,before_upload=before_upload)
 
 
-def backup_locked(c, directory):
+def backup_locked(c, directory, *, no_multipart=False, before_upload=None):
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     name = stamp + '-' + uuid.uuid4().hex
     raw, encrypted = directory/(name+'.zip'), directory/(name+'.zip.age')
@@ -224,7 +224,8 @@ def backup_locked(c, directory):
             or not 0 < raw.stat().st_size <= c['max_archive_bytes']):
         raise ValueError('Native backup missing or unsafe permissions')
     run(['age', '--encrypt', '--recipient', c['recipient'], '--output', str(encrypted), str(raw)])
-    if not encrypted.is_file() or encrypted.is_symlink() or encrypted.stat().st_size == 0:
+    if (not encrypted.is_file() or encrypted.is_symlink()
+            or not 0 < encrypted.stat().st_size <= c['max_archive_bytes']+1048576):
         raise ValueError('Encrypted artifact missing')
     with encrypted.open('rb') as stream:
         if stream.read(22) != b'age-encryption.org/v1\n':
@@ -234,8 +235,11 @@ def backup_locked(c, directory):
     encrypted.with_suffix(encrypted.suffix+'.sha256').write_text(sha+'\n')
     metadata = {'format':'hermes-age-v1', 'timestamp':stamp, 'sha256':sha, 'hermes':'v0.22.5'}
     object_name = c['prefix']+'/'+encrypted.name
+    if before_upload is not None:
+        before_upload()  # scheduled approval may expire while native/encryption runs
     oci(c, 'put', '--name', object_name, '--file', str(encrypted), '--no-overwrite',
-        '--storage-tier', 'Standard', '--metadata', json.dumps(metadata))
+        '--storage-tier', 'Standard', '--metadata', json.dumps(metadata),
+        *(['--no-multipart'] if no_multipart else []))
     check_remote(c, object_name, sha, encrypted.stat().st_size)
     receipt = {'format':'h001c-local-v1', 'raw_name':raw.name, 'raw_size':raw.stat().st_size,
                'raw_sha256':digest(raw), 'encrypted_sha256':sha, 'remote_verified':True}

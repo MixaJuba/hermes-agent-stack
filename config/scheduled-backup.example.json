@@ -1,0 +1,19 @@
+{
+  "backup_config": "/etc/hermes-offsite.json",
+  "state_dir": "/var/lib/hermes-backup-automation",
+  "checked_at": "<UTC_TIME_OF_LOCAL_PREFLIGHT>",
+  "expires_at": "<UTC_DEADLINE_AT_MOST_SEVEN_DAYS_LATER>",
+  "zero_cost_confirmed": false,
+  "independent_recovery_confirmed": false,
+  "exclusive_bucket_writer_confirmed": false,
+  "owner_receipt_delivery_confirmed": false,
+  "max_runs": 7,
+  "max_remote_objects": 14,
+  "max_remote_bytes": 268435456,
+  "last_verified": {
+    "object": "hermes-backups/<FROM_PRIVATE_RECOVERY_RECORD>.zip.age",
+    "sha256": "<TRUSTED_ENCRYPTED_SHA256>",
+    "bytes": 0,
+    "verified_at": "<ACTUAL_TIME_OF_LAST_VERIFIED_BACKUP>"
+  }
+}

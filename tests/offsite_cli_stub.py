@@ -17,6 +17,7 @@ class OfflineCLI:
         self.events = []
         self.corrupt_download = False
         self.get_stdout = b''
+        self.extra_versions = []
 
     def run(self, args, *, env=None):
         if args[0] == 'age':
@@ -51,15 +52,21 @@ class OfflineCLI:
         while flags:
             key, *flags = flags
             assert key not in opts
-            if key == '--no-overwrite':
+            if key in ('--no-overwrite','--no-multipart'):
                 opts[key] = True
             else:
                 value, *flags = flags
                 opts[key] = value
         common = {'--name', '--namespace-name', '--bucket-name'}
+        if action == 'list-object-versions':
+            assert set(opts)=={'--namespace-name','--bucket-name','--fields','--limit'}
+            assert opts['--fields']=='name,size,storageTier'
+            items=[{'name':name,'size':len(data),'storage-tier':'Standard'} for name,(data,metadata) in self.objects.items()]
+            items+=self.extra_versions
+            return json.dumps({'data':{'items':items[:int(opts['--limit'])],'prefixes':[]}}).encode()
         name = opts['--name']
         if action == 'put':
-            assert set(opts) == common | {'--file', '--no-overwrite', '--storage-tier', '--metadata'}
+            assert set(opts)-{'--no-multipart'} == common | {'--file', '--no-overwrite', '--storage-tier', '--metadata'}
             assert opts['--storage-tier'] == 'Standard' and name not in self.objects
             data = Path(opts['--file']).read_bytes()
             assert opts['--file'].endswith('.zip.age') and data.startswith(self.AGE_HEADER)

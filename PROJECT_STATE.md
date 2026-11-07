@@ -265,3 +265,21 @@ Sanitized evidence: [h001c-final-readiness.json](reports/h001c-final-readiness.j
 **Наступне рішення:** не повторювати H-001L3; перед scheduled backup перевірити незалежне зберігання recovery key/record, квоти та накопичення об'єктів, обробку помилок і сповіщення. Тільки після окремого контрольованого дозволу активувати timer. Наразі розробка H-001C не потребує нового Cloud Codex.
 
 Sanitized secondary evidence: [reports/h001l3-operator-summary.json](reports/h001l3-operator-summary.json). Це виклад наданого звіту, не незалежний machine-generated OCI log.
+
+## H-002C — safe automated backup readiness (offline proposal)
+
+Нове доручення власника після H-001L3: підготовка bounded scheduled backup,
+version-aware remote caps, короткого quota approval, durable attempt/outbox state,
+owner-only outbound alerts/приватних receipts і daily heartbeat. База
+`9602e0a5eb02a1a8b4f3d74f8275018344ce20f3`; окрема Cloud branch, не live rollout.
+H-001L3 не повторювати. Accepted native backup/restore та provider/gateway незмінні.
+
+Реалізація не видаляє remote objects і не розширює IAM: cap/expiry/unknown
+inventory → STOP. Безстрокова ротація та нові permissions потребують окремого
+рішення власника. Timer OFF; Local спочатку перевіряє existing IAM/CLI, фактичну
+безкоштовну квоту, незалежний key/record, права і реальну доставку сповіщень.
+Деталі й умови контрольованого запуску: [H002C](docs/H002C-SCHEDULED-BACKUP.uk.md).
+
+Offline evidence: 16 targeted schedule + 18 existing offsite tests PASS; native
+synthetic roundtrip PASS; один full regression 66/66 PASS. [Sanitized report](reports/h002c-readiness.json).
+Це readiness для bounded pilot, не підтвердження live IAM/квот/alerts або timer.

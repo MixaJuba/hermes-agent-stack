@@ -10,6 +10,7 @@
 | H-001L3, один encrypted remote backup + isolated restore | **OPERATOR-REPORTED LIVE PASS** | Не незалежний SSH-аудит, не повний cold recovery |
 | Незалежний recovery key/record | **PARTIAL** | Дві перевірені власником копії ключа, але ризик спільного пристрою та недоступності record |
 | Безпечне регулярне резервування | **NOT ENABLED** | Потрібні перевірка квот, росту сховища, retention та сповіщень |
+| H-002C, bounded automation | **OFFLINE PROPOSAL** | Caps/approval/alerts підготовлені; без remote delete, timer OFF; [Local gate](H002C-SCHEDULED-BACKUP.uk.md) |
 | Безкоштовний моніторинг і alerts | **PLANNED** | Не створювати другий poller, не розкривати secrets |
 | Оцінювання якості аналізу й пошуку | **PLANNED / ITERATIVE** | Практичні сценарії окремо від технічного E2E |
 | Автокоординація ChatGPT + Local/Cloud Codex | **ІДЕЯ** | Не впроваджена; критичні дії вимагають авторизації |

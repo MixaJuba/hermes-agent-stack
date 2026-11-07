@@ -1,0 +1,23 @@
+[Unit]
+Description=Bounded Hermes backup watchdog and owner notification (no poller)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=hermes-agent
+Group=hermes-agent
+UMask=0077
+LoadCredential=telegram:/etc/hermes-backup-notify.env
+ExecStart=/usr/bin/python3 /opt/hermes-agent-stack/scripts/scheduled_backup.py watch --policy /etc/hermes-backup-schedule.json --notification-file %d/telegram --state-dir /var/lib/hermes-backup-automation
+StateDirectory=hermes-backup-automation
+StateDirectoryMode=0700
+TimeoutStartSec=30s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+InaccessiblePaths=/var/lib/hermes-agent -/run/docker.sock
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SocketBindDeny=any
+Restart=no
