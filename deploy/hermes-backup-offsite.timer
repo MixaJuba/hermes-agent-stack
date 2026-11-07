@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily encrypted Hermes backup proposal
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 UTC
+Persistent=true
+Unit=hermes-backup-offsite.service
+
+[Install]
+WantedBy=timers.target

@@ -217,3 +217,33 @@ Build-gates для першого production baseline закриті. Проєк
 5. live test робити мінімальним і контрольованим;
 6. зібрати sanitized evidence;
 7. тільки після coordinator acceptance переносити зміну в production.
+
+## H-001C — offline artifacts
+
+Підготовлено native backup → mandatory age encryption → SHA256 → instance-principal OCI put/HEAD та isolated restore helpers, неактивовані daily systemd templates й offline tests. Live runtime не змінено. H-001 НЕ завершено; bucket/IAM/key custody/real remote recovery залишаються Local Codex qualification після acceptance. Деталі: [implementation](docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md).
+
+Coordinator review виявив помилковий вкладений HEAD у helpers і старих test stubs.
+H-001C correction використовує документований flat JSON / `opc-meta-*`; offline
+orchestrator roundtrip перевіряє put/HEAD/get/checksum/decrypt із реальним native
+backup/import. Фінальні результати — [report](reports/h001c-offline.json).
+Це виправлення artifacts для review; live OCI/age qualification ще НЕ виконана.
+
+### H-001C-FINAL — recovery readiness proposal (7 листопада 2026)
+
+Звірено canonical main `fdcabe9944b1aef24ecbcf3ed22d1a31e38e246b`, його
+PROJECT_HANDOFF і draft PR #1 без зміни main/handoff. За прийнятими L-007A/L-007S:
+код export відповідав перевіреному Git tree; новий одноразовий full backup створено
+7 листопада на тій самій VM, restore нового ZIP не виконувався, off-instance copy
+відсутня. Повторний аудит/backup не потрібний до нового реального gate.
+
+У branch підготовлено bounded raw rotation із захистом latest verified/legacy
+copies, caps/free-space checks і lock; [recovery runbook](docs/RECOVERY-RUNBOOK.uk.md)
+закриває документаційні G1–G4, включно з code-export attestation та зовнішнім
+key/record custody. Це **proposal для coordinator review**, не прийняття PR або
+live H-001. Наступний Local gate після acceptance — безкоштовність/IAM/custody
+preflight й один real age/OCI upload/HEAD/get/native isolated restore без зміни
+працюючого gateway. Timer до live PASS не активувати.
+
+Offline verification H-001C-FINAL: 18 offsite + 3 recovery-readiness tests PASS;
+native synthetic orchestrator PASS; один final regression 50/50 PASS.
+Sanitized evidence: [h001c-final-readiness.json](reports/h001c-final-readiness.json).

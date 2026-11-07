@@ -1,0 +1,71 @@
+{
+  "task": "H-001C-FINAL",
+  "owner": "CLOUD_CODEX",
+  "branch": "cloud/h001c-offsite-dr-artifacts",
+  "branch_head_before": "14e4da3c5b4683639b6647560295f0c24c0dab22",
+  "canonical_main_reviewed": "fdcabe9944b1aef24ecbcf3ed22d1a31e38e246b",
+  "status": "READY_FOR_COORDINATOR_REVIEW; offline recovery readiness only",
+  "live_h001_qualified": false,
+  "accepted_evidence_used": {
+    "L-007A": "handoff-reported accepted audit; no new Oracle access",
+    "L-007S": "handoff-reported one fresh local full backup on 2026-11-07; new ZIP restore NOT RUN; no protected off-instance backup yet"
+  },
+  "raw_policy": {
+    "max_raw_archives": 2,
+    "max_archive_bytes": 67108864,
+    "max_local_bytes": 536870912,
+    "min_free_bytes": 268435456,
+    "native_file_size_limit": "Child-only RLIMIT_FSIZE; native full success/CRC/required members; source/runtime not modified",
+    "prune": "Only older helper-owned receipt/hash-matching raw AFTER latest native/age/put/HEAD, raw/ciphertext/receipt/directory fsync; latest retained",
+    "protected": "No automatic L-006F/L-007S/unreceipted raw deletion; native --keep=0",
+    "failure": "Count failed raw and killed-writer partials; cap stops before native; errors propagated; no retry loop",
+    "concurrency": "Nonblocking flock across budget/backup/verification/retention",
+    "encrypted_local_and_remote": "No automatic delete; local aggregate bytes/free-space guard; actual growth must be monitored"
+  },
+  "G1": "docs/RECOVERY-RUNBOOK.uk.md: Linux cold bootstrap, exact pins/PM/plugin/sandbox/service gates; commands not executed on a new VM",
+  "G2": "Existing offsite_restore.py/offsite_native.py only; isolated verification then separate explicit replacement-host cutover; no direct uncontrolled import",
+  "G3": "stack_provenance.py verifies exact trusted code export file set/Git blobs/modes; separate Hermes patch/PM/plugin attestation; L-007A export remains historical accepted fact",
+  "G4": "Current pointers added; historical evidence preserved; config/upstream.json probe fields explicitly historical TEST ONLY; pins unchanged",
+  "custody": "Placeholder recovery-record example; two independent private off-Oracle key/record copies and decrypt check required; no real identity generated/stored",
+  "tests": {
+    "offsite_targeted": {
+      "tests": 18,
+      "result": "PASS"
+    },
+    "recovery_readiness_targeted": {
+      "tests": 3,
+      "result": "PASS"
+    },
+    "native_orchestrator": "PASS; real native backup/import and fresh-process synthetic memory/history/config/permissions; age/OCI subprocesses stubbed; revival callback only suppressed",
+    "shell_examples": "bash -n PASS; no shell examples executed",
+    "full_regression": {
+      "command": "python3 -m unittest discover -s tests -p test_*.py -v",
+      "tests": 50,
+      "runs": 1,
+      "result": "PASS"
+    },
+    "network_tripwire": "socket.connect/create_connection denied in full suite and Python children; native workers also deny sockets",
+    "diff_check": "PASS",
+    "secret_scan": "PASS; 20 changed/new files; private keys/tokens/auth payloads/account URLs/OCIDs/nonfixture IPs checked; no values emitted"
+  },
+  "compatibility": {
+    "main": "Only PROJECT_HANDOFF.md added since common base; disjoint from branch changes",
+    "handoff": "Read from exact canonical main; preserved without edits; branch proposes offline G1-G4 closure, does not replace accepted decisions",
+    "PR_1": "OPEN draft, same head branch; read-only metadata review; no PR merge/body/status changes",
+    "read_only_checks": "git path-set comparison and git merge-tree (three explicit trees), no conflicts",
+    "merge_action": "Proposed merge into feature branch was automatically rejected; not performed; read-only verification used instead"
+  },
+  "production_runtime_changed": false,
+  "main_changed": false,
+  "production_network_used": false,
+  "github_network": "Repository sync/read-only PR metadata/own branch push only",
+  "remaining_risks": [
+    "Actual zero-cost allowance/Trial commitment discrepancy, IAM and private versioned bucket must pass Local gate",
+    "Actual qualified age/OCI CLI versions, cryptography and key custody not yet verified",
+    "No real off-instance recovery or full cold replacement/cutover performed",
+    "Full native SQLite temporary staging needs actual disk monitoring; helper bounds are not filesystem quotas",
+    "Failed attempts/local cap require operator review; no automatic off-VM alerts",
+    "Tenancy/GitHub availability, key loss and data since last successful backup remain risks"
+  ],
+  "next_action": "Coordinator review/accept; Local controlled free-account/IAM/custody preflight and one real encrypted upload/HEAD/get/native isolated restore; keep existing poller and legacy backups; timer disabled until live PASS"
+}

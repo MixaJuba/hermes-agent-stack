@@ -1,0 +1,16 @@
+{
+  "recipient": "REPLACE_WITH_PUBLIC_AGE_RECIPIENT",
+  "namespace": "REPLACE_NAMESPACE",
+  "bucket": "REPLACE_PRIVATE_BUCKET",
+  "region": "eu-frankfurt-1",
+  "prefix": "hermes-backups",
+  "home": "/var/lib/hermes-agent",
+  "local_dir": "/var/lib/hermes-agent/backups/offsite",
+  "restore_root": "/var/lib/hermes-dr-restores",
+  "hermes_source": "/opt/hermes-agent",
+  "hermes_tools": "/var/lib/hermes-agent/tools",
+  "max_raw_archives": 2,
+  "max_archive_bytes": 67108864,
+  "max_local_bytes": 536870912,
+  "min_free_bytes": 268435456
+}

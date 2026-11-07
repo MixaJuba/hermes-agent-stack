@@ -1,5 +1,9 @@
 # C-002 — Cloudflare production configuration
 
+Історичний evidence C-002/C-002A: описані нижче тодішні next gates вже пройдені
+в L-005/L-006F. Поточний стан — PROJECT_STATE; нове розгортання/відновлення:
+[RECOVERY-RUNBOOK.uk.md](RECOVERY-RUNBOOK.uk.md). Не повторювати старі gates.
+
 **Корекція C-002A після прийняття C-002:** перша реальна Oracle attestation у
 L-005 виявила false positive: штатний pinned catalog installer додає
 `.hermes-catalog.json` у папку плагіна, чого C-002 fixture не моделювала.

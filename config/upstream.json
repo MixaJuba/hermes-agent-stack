@@ -6,5 +6,6 @@
   "nvidia_base_url": "https://integrate.api.nvidia.com/v1",
   "requested_model": "DeepSeek V4.1 Flash",
   "verified_model_id": null,
-  "note": "Source pin verified with git ls-remote. Not an installed or tested Hermes runtime. Model ID, account quotas and free eligibility remain unverified."
+  "historical_nvidia_probe_only": true,
+  "note": "repository/release/commit/tag_object pin the Hermes source. NVIDIA fields preserve the initial TEST ONLY probe, not production configuration. Later installed PM/runtime and Cloudflare/Exa live qualification are recorded in PROJECT_STATE.md; deployment provenance is a separate exact export/source/patch/plugin verification (docs/RECOVERY-RUNBOOK.uk.md)."
 }
