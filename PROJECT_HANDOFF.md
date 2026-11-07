@@ -124,7 +124,7 @@ Hermes Agent, Oracle Always Free VM, Ubuntu ARM64
 | L-005 | PASS | Exa Free, payment absent, PAYGO disabled, keyed search + extract live. |
 | L-006F | **PRODUCTION_READY / ACCEPTED** | Telegram E2E, owner-only, one poller, 3 turns, memory після restart/reboot, real terminal tool, Exa через Telegram, backup/isolated restore. |
 | H-001 | **IN PROGRESS** | Off-instance encrypted disaster recovery, не введено в production. |
-| H-001C | **OFFLINE CODE REVIEW CONDITIONAL PASS; LIVE NOT QUALIFIED** | Виправлено flat OCI HEAD у SHA 14e4da3c…; 13 вузьких + 42 full PASS за Cloud report; draft PR #1 лишається не merged. |
+| H-001C | **OFFLINE SOURCE ACCEPTED; LIVE NOT QUALIFIED** | PR #1 merged до main, Cloud final a6b0b1d…; 21 targeted / 50 full PASS за Cloud report. |
 
 **Конкретні результати L-006F:** Telegram smoke HERMES_TELEGRAM_OK; 3-turn context marker 4817 → 4817 → 4822; terminal tool HERMES_FINAL_OK; memory survives service restart and real VM reboot; один poller; web search повернув https://github.com/nousresearch/hermes-agent/; local backup 419 files, приблизно 1.9 MB, mode 0600, isolated restore підтвердив memory/session/history/config.
 
@@ -140,17 +140,14 @@ Hermes Agent, Oracle Always Free VM, Ubuntu ARM64
 
 **Що зроблено Хмарним до review:** у branch створено scripts/offsite_backup.py, scripts/offsite_restore.py, scripts/offsite_native.py, config/offsite-backup.example.json, deploy/hermes-backup-offsite.{service,timer}, tests/check_offsite_backup.py, tests/test_offsite_backup.py, docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md та reports/h001c-offline.json; змінено README/PROJECT_STATE **лише у branch**. Звіт Cloud: 10 вузьких тестів + real native isolated synthetic restore PASS, full regression 39 PASS після корекції runtime paths; age/OCI stubbed, real network/live не тестували; timer NOT ACTIVATED.
 
-**Review correction:** старий дефект HEAD через nested ['data'] **виправлено** в SHA **14e4da3c5b4683639b6647560295f0c24c0dab22**. Успішно звірено source з офіційною документацією OCI: flat headers, user metadata opc-meta-*, file-based get. Cloud повідомив 13 narrow PASS, 42/42 regression PASS; координатор перевірив GitHub, але **не запускав ці тести самостійно**. Для запуску на Oracle ще потрібні реальний OCI/age E2E, ключ, IAM, free-tier/billing check. До активації timer — політика очищення нових raw ZIP без видалення останнього надійного local backup, обмеження росту диску і незалежний recovery record поза VM. [Draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) не злитий.
+**Review:** Cloud H-001C-FINAL виправив OCI HEAD і зафіксував bounds для raw ZIP. PR #1 злито в main 7 листопада. Статус offline source accepted; живі Oracle/age/recovery тести не виконані. Старі 14e4da3c/42 tests — історична попередня ітерація.
 
 **Порядок відновлення роботи:**
-1. Прочитати актуальні GitHub main/PROJECT_STATE/AGENTS і [draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1); перевірити, чи head H-001C досі 14e4da3c… або змінився.
-2. Офіційний OCI CLI HEAD/PUT/GET contract і diff після 4fd5cd2… вже переглянуті координатором; **не повторювати все без причини**, але перевірити будь-які нові зміни.
-3. Визначити порядок безпечного прийняття PR у main із новим PROJECT_HANDOFF.md (main і Cloud branch розійшлися). Не force-push; не видавати draft PR за merge.
-4. Перед live rollout дати Локальному окремий read-only preflight: actual OCI Free usage/billing, installed age/oci CLI availability/version, IAM feasibility, key custody і recovery record поза VM. Якщо ризик оплачуваного ресурсу — STOP.
-5. Після accepted code / security preflight виконати **один контрольований** real age+OCI upload/HEAD/get+isolated native restore; не змінювати Hermes provider/model, Telegram, gateway; не створювати другого poller.
-6. До активації щоденного timer окремо перевірити/впровадити bounded raw-ZIP retention та disk/storage monitoring. Після реального PASS оновити PROJECT_STATE і цей handoff.
-
-**Після H-001:** окремий zero-cost monitoring/alerts gate без другого poller, потім функціональні покращення Telegram-агента за пріоритетами власника.
+1. Перевірити актуальний main/PROJECT_STATE і merged PR #1; L-007S прийнято, новий ZIP тільки локальний.
+2. Не повторювати Cloud H-001C/G1–G4/L-007A: підготовлений код, пояснення, тести вже в main. Не перевстановлювати працюючого Hermes.
+3. Перед новими ресурсами Local Codex підтверджує actual €0 spend boundary/Always Free billing, OCI IAM/instance-principal feasibility, доступні age/OCI CLI, незалежний key custody й private recovery record. На невідомих витратах/доступах — STOP.
+4. Після безпечного preflight й відповідного дозволу виконати одне реальне шифроване off-instance копіювання й ізольований restore з 1 poller, без зміни live home.
+5. Лише після підтвердженого live PASS обережно активувати щоденний timer з контролем disk/quota/failure. Оновити PROJECT_STATE і handoff із доказами.
 
 ## 7. Джерела правди та навігація
 
@@ -242,11 +239,11 @@ ChatGPT Projects можуть використовувати файли та і�
 
 ### Коротка стартова фраза для нового чату
 
-> Продовжуємо ChatGPT Command Center / Hermes Agent. Ти головний координатор. Прочитай прикріплений PROJECT_HANDOFF.md та АКТУАЛЬНІ PROJECT_STATE.md і AGENTS.md у GitHub MixaJuba/hermes-agent-stack. Перевір main і cloud/h001c-offsite-dr-artifacts, не приймай старі SHA за актуальні. L-006F production baseline прийнятий; H-001C OCI HEAD уже виправлений у 14e4da3c…, coordinator offline code review — conditional PASS. Перевір draft PR #1, актуальний main та незакриті умови (raw ZIP, recovery record/key custody, real OCI/age/free billing), підготуй контрольований Local Codex read-only preflight і не оголошуй H-001 live PASS. Не змінюй живий бот, провайдерів, секрети чи main без перевірки. Пояснюй мені коротко і просто; всю технічну роботу координуй сам.
+> Продовжуємо ChatGPT Command Center / Hermes Agent. Ти головний координатор. Прочитай прикріплений PROJECT_HANDOFF.md та АКТУАЛЬНІ PROJECT_STATE.md і AGENTS.md у GitHub MixaJuba/hermes-agent-stack. Перевір main і cloud/h001c-offsite-dr-artifacts, не приймай старі SHA за актуальні. L-006F production baseline прийнятий; H-001C offline code вже прийнято і злито в main (PR #1, 7369dee8…), але Oracle production не змінено. Не повторюй Cloud-завдання. Перевір actual main і підготуй мінімальний Local gate для free billing/IAM/key custody та одного real age/OCI/isolated recovery test. Timer не вмикати до live PASS. Не змінюй живий бот, провайдерів, секрети чи main без перевірки. Пояснюй мені коротко і просто; всю технічну роботу координуй сам.
 
 ---
 
-**Ключова перевірка на вході:** поточний H-001C branch SHA / draft PR #1 vs актуальний main; чи є live OCI/age preflight та умови збереження recovery key і маніфесту. Не вважати review PR за live rollout.
+**Ключова перевірка на вході:** H-001C код уже в main; перевір, чи проведені Local live preflight/OCI/age/isolated recovery і незалежне custody ключа. Не вважати GitHub merge за live rollout.
 
 **Оновлення документа:** після кожного прийнятого milestone або суттєвої зміни відповідальних/обмежень; публічний файл ніколи не повинен містити реальні credentials чи приватні дані.
 
@@ -254,9 +251,14 @@ ChatGPT Projects можуть використовувати файли та і�
 
 Локальний Codex провів інвентаризацію без змін production. На момент перевірки `hermes-ua.service` active, poller=1, core config/pins/plugin/sandbox/guard PASS. Серверний `/opt/hermes-agent-stack` є **verified export без `.git`**, а не Git checkout: 56/56 blobs збігаються із деревом commit `f0f8a41857aa9b2c647638ee070900b529e11e19` (`a4d147cf3aefc322d53966f031ef5ee93df37579`). Порівняння з тогочасним main `3e89f08499279c70d833bd8f2e4d94bf679a6d5d` показало лише docs/evidence differences, production drift не виявлено в audited scope. Не синхронізувати runtime тільки заради цих документів.
 
-Відкриті G1–G4: cold bootstrap runbook, точна isolated native restore procedure, provenance deployed export, застарілий історичний upstream/NVIDIA metadata. Cold recovery НЕ кваліфіковано; H-001C лишається [draft PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) без live rollout. Один відомий full local ZIP (1 970 116 bytes, 2 листопада) на тому самому VM boot volume, DB/WAL має пізніший mtime; регулярний backup timer не діє, off-instance copy не підтверджена. OCI CLI та `age` на host немає; IAM/key custody/free-billing gate UNKNOWN. Oracle Free Trial має розбіжність commitment views, показане consumption/overage €0 не є гарантією відсутності майбутніх витрат. L-007A report та `inventory.sanitized.json` надані власником у чаті; докладний приватний inventory **не публікувати в GitHub**. Наступний пріоритет: контрольований **свіжий одноразовий локальний Hermes backup без зміни gateway**, після нього GitHub-only G1–G4 і off-instance DR qualification, без зайвого повторного аудиту.
+Відкриті G1–G4: cold bootstrap runbook, точна isolated native restore procedure, provenance deployed export, застарілий історичний upstream/NVIDIA metadata. Cold recovery НЕ кваліфіковано; H-001C із часом було [злито через PR #1](https://github.com/MixaJuba/hermes-agent-stack/pull/1), але без live rollout. Один відомий full local ZIP (1 970 116 bytes, 2 листопада) на тому самому VM boot volume, DB/WAL має пізніший mtime; регулярний backup timer не діє, off-instance copy не підтверджена. OCI CLI та `age` на host немає; IAM/key custody/free-billing gate UNKNOWN. Oracle Free Trial має розбіжність commitment views, показане consumption/overage €0 не є гарантією відсутності майбутніх витрат. L-007A report та `inventory.sanitized.json` надані власником у чаті; докладний приватний inventory **не публікувати в GitHub**. Наступний пріоритет: контрольований **свіжий одноразовий локальний Hermes backup без зміни gateway**, після нього GitHub-only G1–G4 і off-instance DR qualification, без зайвого повторного аудиту.
 
 
 ## 13. L-007S — одноразовий свіжий backup (звіт Local Codex, 7 листопада 2026)
 
 Local Codex повідомив про **PASS**: створено рівно один новий Hermes native full backup у приватному каталозі на тій самій Oracle VM, без перезапуску gateway. UTC назва `hermes-backup-l007s-20261106T235846Z-a95448b3.zip`; creation 2026-11-07 01:58:48 Europe/Kyiv, 2 256 760 bytes, 423 entries, SHA256 `62b706c76d60e4ab04c881f3f2a08080edb628b8086fe70e2b1aacb1219b44d6`; native exit 0, ZIP CRC/required members PASS за звітом, 0600/0700; попередній backup збережений. `hermes-ua.service` active, Telegram connected, pollers=1; код/config/credentials/systemd не змінювали. Новий ZIP спочатку мав ширші права, виправлені на 0600 саме для нього. **Restore цього нового архіву NOT RUN**; off-instance copy відсутня; повний H-001 NOT COMPLETE. Власник надав лише хід роботи й sanitized фінальний звіт, а не повний первинний SSH evidence. Не викликати знову L-007S без нової потреби. Наступна пріоритетна задача — **H-001 zero-cost/permissions/key custody/OCI CLI+age feasibility preflight** перед будь-яким платним або live rollout; усунути raw ZIP retention і забезпечити поза-VM recovery record до timer. G1–G4 GitHub документація залишається pending, але не повинна блокувати забезпечення off-instance recovery.
+
+
+## 14. 7 листопада — coordinator offline acceptance H-001C-FINAL
+
+GitHub PR #1 merged, merge commit `7369dee839464e2cdf8e2f0f94d362317e6ff704`, reviewed Cloud source `a6b0b1d190b78d9e7dbdfe87f121cc75fa87a049`. Закрито G1–G4 documentation, додано raw ZIP bounded retention та зовнішній record template, Cloud 50/50 regression PASS. Coordinator перевірив GitHub source/docs та upstream, але не виконав власного live OCI/age або independent Hermes test run. **Production bot unchanged; no OCI bucket, no scheduled backup timer, no confirmed off-instance copy; live H-001 pending.** L-007S new native local full backup від 7 листопада — ZIP verified, isolated restore NOT RUN. Наступний відповідальний — Local Codex, мінімальний безпечний H-001 live preflight щодо фактичних €0 витрат, ключів та доступів, потім один real encrypted backup/isolated restore за необхідних дозволів. Хмарного Codex повторно не залучати без виявленого коду-defect.
