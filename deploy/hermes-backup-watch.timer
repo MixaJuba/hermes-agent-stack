@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly backup freshness/outbox check (not a Telegram poller)
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+Unit=hermes-backup-watch.service
+
+[Install]
+WantedBy=timers.target

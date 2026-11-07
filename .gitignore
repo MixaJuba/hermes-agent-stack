@@ -33,3 +33,9 @@ l*-work/
 *recovery-identity*
 recovery-record*.json
 !config/recovery-record.example.json
+
+# Private automation runtime settings/state are never public fixtures.
+hermes-backup-schedule.json
+hermes-backup-notify.env
+job.json
+notify.json

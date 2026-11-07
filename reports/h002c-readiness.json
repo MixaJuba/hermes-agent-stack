@@ -1,0 +1,93 @@
+{
+  "task": "H-002C",
+  "owner": "CLOUD_CODEX",
+  "base_sha": "9602e0a5eb02a1a8b4f3d74f8275018344ce20f3",
+  "branch": "cloud/h002c-safe-automated-backups",
+  "result": "PASS OFFLINE; READY_FOR_COORDINATOR_REVIEW; bounded pilot only",
+  "workspace_before": "clean on preserved H-001C branch; fetched current main then created new branch; no prior changes erased",
+  "accepted_evidence": "H-001C-FINAL merged; H-001L3 operator-reported one real encrypted backup/isolated restore; not repeated",
+  "implementation": {
+    "reuse": "Accepted native backup/restore; no new restore engine or dependencies",
+    "local_bounds": "Existing raw retention/disk/byte/lock guards preserved; encrypted output bounded before PUT",
+    "remote_bounds": "Version-aware whole-bucket inventory with explicit name,size,storageTier and bounded --limit; incomplete/unknown/IAM denied fails before PUT",
+    "default_budget": {
+      "max_runs": 7,
+      "approval_days_max": 7,
+      "max_remote_objects": 14,
+      "max_remote_bytes": 268435456,
+      "attempts_per_utc_day": 1
+    },
+    "reservation": "Durable fsync before first network call; no refund/blind retry after ambiguous PUT; explicit init only",
+    "upload": "Existing instance principal; no multipart for scheduled route; revalidate policy/expiry immediately before PUT; previous verified reference HEAD checked first",
+    "deletion": "No remote delete/lifecycle mutation; no encrypted local pruning; legacy/last verified protection retained; cap means stop and alert",
+    "alert": "Same existing bot, outbound sendMessage only; numeric owner; redirects off; 10s socket timeout/30s unit bound; private details withheld",
+    "outbox": "Private durable state; at most three notification attempts per UTC day and one per hour; pending survives reboot; acknowledgements checked for owner chat",
+    "recovery_receipt": "Explicit opt-in required; owner DM gets latest object/SHA256/bytes/time; no private identity/account/bucket/token in message; not E2E and not sole full recovery record",
+    "watch": "OnFailure/OnSuccess + hourly/boot timer; failure/stale >36h/interrupted/expiry/state/clock detected; daily heartbeat",
+    "credentials": "Derived file with only existing Telegram token/owner via LoadCredential; no provider EnvironmentFile; watcher cannot access production home/socket"
+  },
+  "tests": {
+    "targeted_schedule": {
+      "count": 16,
+      "result": "PASS"
+    },
+    "existing_offsite": {
+      "count": 18,
+      "result": "PASS"
+    },
+    "native_synthetic_roundtrip": "PASS with real pinned native backup/import and fresh-process memory/history/config/permissions; age/OCI stubbed; callback revival only suppressed",
+    "unit_sanity": "systemd-analyze verify PASS; templates not installed/activated",
+    "failure_cases": [
+      "remote versions/bytes/unknown sizes/tier/pagination",
+      "missing IAM/timeouts",
+      "lost PUT acknowledgement",
+      "missing/corrupt/symlink/unsafe state",
+      "expiry/revocation/clock",
+      "same-day duplicate/run budget",
+      "credential/owner validation",
+      "network pending retry and recovery",
+      "new receipt after same-day heartbeat",
+      "systemd failure hook contract"
+    ],
+    "full_regression": {
+      "count": 66,
+      "runs": 1,
+      "result": "PASS",
+      "command": "python3 -m unittest discover -s tests -p test_*.py -v"
+    },
+    "external_network_tripwire": "Python socket.connect/create_connection denied in suite/children; no real OCI/Telegram calls",
+    "secret_scan": "PASS; 16 changed/new files; no secret values emitted",
+    "diff_check": "PASS"
+  },
+  "unchanged": [
+    "Hermes pin/PM runtime/dependencies",
+    "Cloudflare/provider/model",
+    "Exa",
+    "Telegram gateway/config/service",
+    "Oracle/IAM/billing/credentials",
+    "timer activation"
+  ],
+  "live_gates": [
+    "Owner confirms independent key/record from another device/storage and opts into private metadata receipts",
+    "Local verifies aggregate zero-cost storage/request headroom and exclusive bucket writer; fills short-lived protected approval",
+    "Local verifies installed OCI version fields/pagination/no-multipart and actual existing list-object-versions permission; no IAM expansion implied",
+    "Local verifies root/service/LoadCredential rights, real sendMessage owner delivery/outage recovery and MONITOR_SERVICE_RESULT",
+    "After separate authorization, one controlled scheduled-path attempt and both timers activation/cycle; preserve existing poller and anchor",
+    "Indefinite retention/remote version deletion/lifecycle/new IAM require a separate owner decision"
+  ],
+  "limitations": [
+    "Finite pilot stops on expiry/cap; renewal is explicit reconciliation, not autonomous counter reset",
+    "Bucket budget is not Oracle global billing enforcement; other resources/plan changes can invalidate zero-cost assumptions",
+    "No notification can leave a powered-off VM/offline network; heartbeat absence requires independent owner/Local check",
+    "Delivery may be delayed by cooldown/hourly watch/daily cap; lost acknowledgement can duplicate a bounded message",
+    "Newest receipt may be pending; earlier independently recorded anchor is not deleted",
+    "Full cold recovery still unqualified; scheduled success is native/encryption/PUT/HEAD verification, not a new restore test",
+    "Live IAM details absent from public H-001L3 summary; inspection access remains unknown until Local gate"
+  ],
+  "production_network_used": false,
+  "github_network": "sync, public OCI source contract reads and own-branch push only",
+  "main_changed": false,
+  "production_changed": false,
+  "timers_activated": false,
+  "next_action": "Coordinator review; Local gated bounded pilot. No automatic rollout or repeat of H-001L3."
+}

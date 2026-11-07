@@ -269,3 +269,12 @@ GitHub PR #1 merged, merge commit `7369dee839464e2cdf8e2f0f94d362317e6ff704`, re
 Рівень доказу: **owner-supplied operator report**, без незалежного нового SSH/OCI доступу координатора. Незалежне від одного пристрою зберігання ключа і record ще не засвідчене; повний cold recovery на новій VM не виконувався. Платні опції, за повідомленням Local, не вмикалися; доступна Free Trial/Free квота, але без гарантії майбутніх нульових списань. Не публікувати ключ, приватний record, account/object ID, деталі IAM чи архів.
 
 Наступне завдання: за мінімальних лімітів Codex довести незалежне відновлення key/record, контроль накопичення у Object Storage і повідомлення про збої; scheduled timer тільки після окремого узгодженого рішення. H-001C та L-007A/L-007S/H-001L3 повторно не запускати без ознак регресії. Нову Cloud Codex робочу копію синхронізувати лише під нове обґрунтоване завдання. Путівник: [docs/INDEX.uk.md](docs/INDEX.uk.md), summarized evidence: [reports/h001l3-operator-summary.json](reports/h001l3-operator-summary.json).
+
+## H-002C — нова Cloud задача, offline readiness
+
+Власник окремо доручив підготувати safe scheduled backups після H-001L3. У новій
+branch від main `9602e0a…` підготовлено bounded uploads без remote deletion/IAM
+expansion, private alerts/receipts і короткий quota approval. Це не скасовує
+operator-reported H-001L3 PASS і не є timer activation. Після code acceptance
+потрібний контрольований Local gate; умови та залишкові ризики:
+[H002C-SCHEDULED-BACKUP.uk.md](docs/H002C-SCHEDULED-BACKUP.uk.md).

@@ -16,6 +16,10 @@
 
 ## Рівні доказів
 
+[H-002C: контрольоване scheduled резервування](H002C-SCHEDULED-BACKUP.uk.md) —
+offline proposal після H-001L3: ліміти/alerts підготовлені, timer не ввімкнений,
+live права/квоти й доставку сповіщень ще перевірятиме Local.
+
 | Етап | Джерело | Що саме доведено |
 | --- | --- | --- |
 | L-006F | [Acceptance](L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md), [звіт](../reports/l006f-production-ready.json) | Реальні інтеграційні тести на дату звіту, не live-моніторинг |
