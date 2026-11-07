@@ -5,15 +5,17 @@
 > [PROJECT_STATE.md](../PROJECT_STATE.md). NVIDIA-прив’язка нижче описує історію,
 > не поточний tracked deployment. Підсумок source/runtime/ізоляції збережено.
 
-## Межі поточного результату
+## Межі історичного результату C-001
 
 У Codex Cloud штатним PM установлено Hermes **v0.22.5**, commit
 `bf0203a794a07aac3ff764972ab9087baa4e4f4e`, керований **Python 3.14.9**.
 Це підготовче середовище, не постійний сервер бота. Gateway не запущений.
 
-**Блокер постійної експлуатації залишається:** NVIDIA API Trial Terms 1.2/1.4
+**Блокер на момент C-001:** NVIDIA API Trial Terms 1.2/1.4
 дозволяють evaluation/internal testing, а не production без окремої підписки.
-Безкоштовний production-маршрут ще не обраний і не погоджений. Конфігурація
+На тому етапі production-маршрут ще не був обраний. Згодом L-004C/L-006F
+підтвердили Cloudflare; чинна процедура — [recovery runbook](RECOVERY-RUNBOOK.uk.md).
+Конфігурація
 NVIDIA нижче — лише тестова заготовка, не дозвіл на постійного бота. Платні
 або сторонні резерви не підключаємо. Результат Playground не перевіряє API-ключ.
 
@@ -55,7 +57,7 @@ sounddevice, edge-tts, ElevenLabs. Штатний PM установив обов
 Поля звірено з pinned кодом; виконано нативний `validate_config_structure`.
 Секретів та owner ID у файлі немає. Це не готовий профіль для запуску.
 
-- Єдиний основний маршрут — NVIDIA. `fallback_model: []`; auxiliary маршрути
+- В історичному C-001 snapshot основний маршрут був NVIDIA. `fallback_model: []`; auxiliary маршрути
   явно NVIDIA з порожніми fallback chains. Автозаголовки та background review
   вимкнені. Не вмикати сторонні credentials/borrowed logins або auto-routing.
 - Exa закріплено для search/extract. `keyless_fallback` і `keyless_rescue`

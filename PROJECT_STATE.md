@@ -227,3 +227,23 @@ H-001C correction використовує документований flat JSO
 orchestrator roundtrip перевіряє put/HEAD/get/checksum/decrypt із реальним native
 backup/import. Фінальні результати — [report](reports/h001c-offline.json).
 Це виправлення artifacts для review; live OCI/age qualification ще НЕ виконана.
+
+### H-001C-FINAL — recovery readiness proposal (7 листопада 2026)
+
+Звірено canonical main `fdcabe9944b1aef24ecbcf3ed22d1a31e38e246b`, його
+PROJECT_HANDOFF і draft PR #1 без зміни main/handoff. За прийнятими L-007A/L-007S:
+код export відповідав перевіреному Git tree; новий одноразовий full backup створено
+7 листопада на тій самій VM, restore нового ZIP не виконувався, off-instance copy
+відсутня. Повторний аудит/backup не потрібний до нового реального gate.
+
+У branch підготовлено bounded raw rotation із захистом latest verified/legacy
+copies, caps/free-space checks і lock; [recovery runbook](docs/RECOVERY-RUNBOOK.uk.md)
+закриває документаційні G1–G4, включно з code-export attestation та зовнішнім
+key/record custody. Це **proposal для coordinator review**, не прийняття PR або
+live H-001. Наступний Local gate після acceptance — безкоштовність/IAM/custody
+preflight й один real age/OCI upload/HEAD/get/native isolated restore без зміни
+працюючого gateway. Timer до live PASS не активувати.
+
+Offline verification H-001C-FINAL: 18 offsite + 3 recovery-readiness tests PASS;
+native synthetic orchestrator PASS; один final regression 50/50 PASS.
+Sanitized evidence: [h001c-final-readiness.json](reports/h001c-final-readiness.json).

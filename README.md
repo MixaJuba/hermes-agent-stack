@@ -29,7 +29,7 @@ Production бюджет — 0 грн, без платних резервних �
 і не захистить від повної втрати її диска. Новий remote recovery ще **не пройшов
 live qualification**; H-001C готує лише код, offline-тести та неактивовані шаблони.
 
-[Поточний стан і докази](PROJECT_STATE.md) · [Операційний runbook](docs/OPERATIONS-RUNBOOK.uk.md) · [DR implementation](docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md)
+[Поточний стан і докази](PROJECT_STATE.md) · [Операційний runbook](docs/OPERATIONS-RUNBOOK.uk.md) · [Безпечне розгортання та відновлення](docs/RECOVERY-RUNBOOK.uk.md) · [DR implementation](docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md)
 
 ## Документація
 

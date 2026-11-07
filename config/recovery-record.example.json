@@ -1,0 +1,30 @@
+{
+  "format": "h001-recovery-record-v1",
+  "created_utc": "<UTC_TIMESTAMP>",
+  "storage": {
+    "namespace": "<PRIVATE_NAMESPACE>",
+    "bucket": "<PRIVATE_BUCKET>",
+    "region": "<REGION>",
+    "object": "hermes-backups/<TIMESTAMP_UUID>.zip.age",
+    "version_id_if_available": "<OPTIONAL_OBJECT_VERSION_ID>"
+  },
+  "encrypted_sha256": "<INDEPENDENTLY_RECORDED_64_HEX_DIGEST>",
+  "encrypted_bytes": "<MEASURED_BYTES>",
+  "age_public_recipient": "<PUBLIC_AGE_RECIPIENT>",
+  "private_identity_custody_reference": "<OFFLINE_LOCATION_LABEL_ONLY_NO_PRIVATE_KEY>",
+  "software": {
+    "accepted_stack_commit": "<COORDINATOR_ACCEPTED_STACK_SHA>",
+    "stack_tree": "<VERIFIED_GIT_TREE>",
+    "hermes_commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+    "quota_patch_sha256": "<FROM_VERIFIED_CONFIG_HERMES_PATCH_JSON>",
+    "cloudflare_plugin_commit": "f6821d058d504ee6324b0d3217564b93124c09f9",
+    "exa_version": "2.10.2",
+    "oci_cli_version": "<QUALIFIED_VERSION>",
+    "age_version": "<QUALIFIED_VERSION>"
+  },
+  "verification": {
+    "remote_head": "<PASS_AFTER_LIVE_TEST>",
+    "isolated_native_restore": "<PASS_ONLY_AFTER_ACTUAL_VERIFICATION>",
+    "evidence_location": "<PRIVATE_SANITIZED_RECORD_LOCATION>"
+  }
+}

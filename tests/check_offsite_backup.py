@@ -11,7 +11,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import offsite_backup as b
 import offsite_restore as r
 from offsite_cli_stub import OfflineCLI
-from test_offsite_backup import recipient
+from test_offsite_backup import recipient, LIMITS
 
 ROOT=Path(__file__).resolve().parents[1]
 # Each child has its own Python socket tripwire before any Hermes imports.
@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix='hermes-ua-restore-') as tmp:
     tools=Path(os.environ['HERMES_RUNTIME_DIR'])
     c=dict(recipient=recipient(),namespace='synthetic',bucket='synthetic',region='eu-frankfurt-1',
            prefix='hermes-backups',home=str(source),local_dir=str(root/'backups'),
-           restore_root=str(root),hermes_source=str(source_checkout),hermes_tools=str(tools))
+           restore_root=str(root),hermes_source=str(source_checkout),hermes_tools=str(tools),**LIMITS)
     identity=root/'temporary-test-identity'
     identity.write_text('SYNTHETIC NOT A PRIVATE KEY'); identity.chmod(0o600)
     tripwire=root/'tripwire'; tripwire.mkdir()
@@ -47,7 +47,8 @@ with tempfile.TemporaryDirectory(prefix='hermes-ua-restore-') as tmp:
         # no PM install records; do not provision/copy runtime state into it.
         # No backup/extraction/memory/history/config implementation is mocked.
         cli.events.append('native-'+action)
-        child(ROOT/'scripts/offsite_native.py',[action,home,archive],home)
+        args=[action,home,archive]+(['--max-archive-bytes',c['max_archive_bytes']] if action=='backup' else [])
+        child(ROOT/'scripts/offsite_native.py',args,home)
     safe_env={k:os.environ[k] for k in ('PATH','PYTHONPATH') if k in os.environ}
     safe_env['PYTHONPATH']=str(tripwire)+os.pathsep+safe_env.get('PYTHONPATH','')
     safe_env['HOME']=str(root)

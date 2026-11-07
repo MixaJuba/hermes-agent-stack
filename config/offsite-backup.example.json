@@ -8,5 +8,9 @@
   "local_dir": "/var/lib/hermes-agent/backups/offsite",
   "restore_root": "/var/lib/hermes-dr-restores",
   "hermes_source": "/opt/hermes-agent",
-  "hermes_tools": "/var/lib/hermes-agent/tools"
+  "hermes_tools": "/var/lib/hermes-agent/tools",
+  "max_raw_archives": 2,
+  "max_archive_bytes": 67108864,
+  "max_local_bytes": 536870912,
+  "min_free_bytes": 268435456
 }

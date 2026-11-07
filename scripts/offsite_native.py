@@ -9,17 +9,32 @@ from unittest.mock import patch
 import zipfile
 
 
-def execute(action, home, archive):
+def limit_backup_size(maximum):
+    """Bound partial archives and native SQLite staging in this child process only."""
+    import resource
+    if type(maximum) is not int or maximum <= 0:
+        raise ValueError('Explicit native backup file-size bound required')
+    current = resource.getrlimit(resource.RLIMIT_FSIZE)
+    limit = min([maximum] + [n for n in current if n != resource.RLIM_INFINITY])
+    resource.setrlimit(resource.RLIMIT_FSIZE, (limit, limit))
+
+
+def execute(action, home, archive, maximum=None):
     if action == 'restore' and (home == Path('/var/lib/hermes-agent') or Path('/var/lib/hermes-agent') in home.parents or home.resolve() != home):
         raise ValueError('Isolated canonical target required')
     os.environ['HERMES_HOME']=str(home)
     os.umask(0o077)
+    if action == 'backup':
+        limit_backup_size(maximum)
     if action == 'restore' and (any(home.iterdir()) or home.is_symlink()):
         raise ValueError('Restore worker requires empty target')
     from hermes_cli.backup import run_backup, run_import
     if action=='backup':
         if run_backup(SimpleNamespace(output=str(archive),keep=0)) is not True:
             raise ValueError('Native backup incomplete')
+        with zipfile.ZipFile(archive) as z:
+            if z.testzip() is not None or not {'config.yaml','state.db'} <= set(z.namelist()):
+                raise ValueError('Native full backup integrity/required members failed')
         return
     # Native external-provider entries could otherwise write outside isolated home.
     with zipfile.ZipFile(archive) as z:
@@ -66,4 +81,11 @@ def execute(action, home, archive):
 
 
 if __name__=='__main__':
-    execute(sys.argv[1],Path(sys.argv[2]),Path(sys.argv[3]))
+    import argparse
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=('backup','restore'))
+    parser.add_argument('home', type=Path)
+    parser.add_argument('archive', type=Path)
+    parser.add_argument('--max-archive-bytes', type=int)
+    args=parser.parse_args()
+    execute(args.action,args.home,args.archive,args.max_archive_bytes)

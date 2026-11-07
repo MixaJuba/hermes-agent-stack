@@ -17,6 +17,8 @@ import offsite_backup as b
 import offsite_restore as r
 from offsite_cli_stub import OfflineCLI
 
+LIMITS=dict(max_raw_archives=2,max_archive_bytes=67108864,max_local_bytes=536870912,min_free_bytes=268435456)
+
 
 def recipient():
     # Public-only synthetic bech32 payload; never an age private identity.
@@ -37,7 +39,7 @@ class OffsiteTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='h001-test-'); self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name)
-        self.c=dict(recipient=recipient(),namespace='synthetic',bucket='synthetic',region='eu-frankfurt-1',prefix='hermes-backups',home=str(self.root/'home'),local_dir=str(self.root/'backups'),restore_root=str(self.root/'restores'),hermes_source=str(self.root/'source'),hermes_tools=str(self.root/'tools'))
+        self.c=dict(recipient=recipient(),namespace='synthetic',bucket='synthetic',region='eu-frankfurt-1',prefix='hermes-backups',home=str(self.root/'home'),local_dir=str(self.root/'backups'),restore_root=str(self.root/'restores'),hermes_source=str(self.root/'source'),hermes_tools=str(self.root/'tools'),**LIMITS)
         (self.root/'home').mkdir()
         self.calls=[]; self.upload=None
         self.env=patch.dict(os.environ,{},clear=True); self.env.start(); self.addCleanup(self.env.stop)
@@ -100,6 +102,90 @@ class OffsiteTests(unittest.TestCase):
         path=self.root/'config.json'; path.write_text(json.dumps(self.c))
         self.assertEqual(b.load_config(path),self.c)
         with patch.object(b.shutil,'which',return_value=None),self.assertRaises(ValueError): b.preflight()
+        for bad in ({'max_raw_archives':1},{'max_archive_bytes':0},{'min_free_bytes':True},{'max_local_bytes':1}):
+            path.write_text(json.dumps({**self.c,**bad}))
+            with self.subTest(bad=bad),self.assertRaises(ValueError): b.load_config(path)
+
+    def test_bounded_raw_rotation_preserves_legacy_backups(self):
+        directory=Path(self.c['local_dir']); directory.mkdir(mode=0o700)
+        # Actual legacy archive names never match our ownership contract.
+        protected=[self.root/'home/backups/hermes-backup-l006f.zip',
+                   self.root/'home/backups/hermes-backup-l007s-synthetic.zip']
+        protected[0].parent.mkdir(mode=0o700,parents=True)
+        for p in protected: p.write_bytes(b'legacy reliable'); p.chmod(0o600)
+        for _ in range(4):
+            self.perform()
+            self.assertEqual(len(list(directory.glob('*.zip'))),1)
+        for p in protected: self.assertEqual(p.read_bytes(),b'legacy reliable')
+        # Even a copied legacy ZIP INSIDE our directory is never silently deleted.
+        legacy=directory/'hermes-backup-l007s-synthetic.zip'; legacy.write_bytes(b'protected'); legacy.chmod(0o600)
+        with patch.object(b,'native') as native,self.assertRaises(ValueError): b.backup(self.c)
+        native.assert_not_called(); self.assertTrue(legacy.exists())
+
+    def test_failed_attempts_stop_at_bound_and_keep_last_verified_raw(self):
+        self.perform(); directory=Path(self.c['local_dir'])
+        good=next(directory.glob('*.zip')); original=good.read_bytes()
+        with patch.object(b,'native',side_effect=self.native),patch.object(b,'run',side_effect=RuntimeError('age fail')):
+            with self.assertRaises(RuntimeError): b.backup(self.c)
+        self.assertEqual(len(list(directory.glob('*.zip'))),2)
+        with patch.object(b,'native') as native,self.assertRaises(ValueError): b.backup(self.c)
+        native.assert_not_called()
+        self.assertEqual(good.read_bytes(),original)
+        self.assertEqual(len(list(directory.glob('*.zip'))),2)
+        killed=self.root/'killed-writer'; killed.mkdir(mode=0o700)
+        for name in ('verified.zip','.next.zip.123-456.partial'):
+            p=killed/name; p.write_bytes(b'preserve'); p.chmod(0o600)
+        with patch.object(b,'native') as native,self.assertRaises(ValueError):
+            b.backup({**self.c,'local_dir':str(killed)})
+        native.assert_not_called()
+        self.assertTrue((killed/'.next.zip.123-456.partial').exists())
+
+    def test_disk_budget_and_concurrent_run_fail_before_native_backup(self):
+        self.perform()
+        with patch.object(b.shutil,'disk_usage',return_value=type('Usage',(),{'free':0})()), \
+                patch.object(b,'native') as native,self.assertRaises(ValueError): b.backup(self.c)
+        native.assert_not_called()
+        small={**self.c,'max_local_bytes':1}
+        with patch.object(b,'native') as native,self.assertRaises(ValueError): b.backup(small)
+        native.assert_not_called()
+        with (Path(self.c['local_dir'])/'.backup.lock').open('r+') as lock:
+            b.fcntl.flock(lock,b.fcntl.LOCK_EX|b.fcntl.LOCK_NB)
+            with patch.object(b,'native') as native,self.assertRaises(ValueError): b.backup(self.c)
+            native.assert_not_called()
+
+    def test_retention_requires_receipts_and_propagates_cleanup_failure(self):
+        self.perform(); directory=Path(self.c['local_dir']); old=next(directory.glob('*.zip'))
+        receipt=next(directory.glob('.h001c-*.json'))
+        data=json.loads(receipt.read_text()); data['raw_sha256']='0'*64
+        receipt.write_text(json.dumps(data))
+        with self.assertRaises(ValueError): self.perform()
+        self.assertTrue(old.exists()); self.assertEqual(len(list(directory.glob('*.zip'))),2)
+        # Never adopt an unreceipted timestamp/UUID-shaped ZIP, including old H-001C.
+        other=self.root/'retention-isolated'; other.mkdir(mode=0o700)
+        unmanaged=other/('20261107T000000Z-'+'a'*32+'.zip'); unmanaged.write_bytes(b'keep')
+        latest=other/('20261107T000001Z-'+'b'*32+'.zip'); latest.write_bytes(b'new')
+        latest.with_suffix('.zip.age').write_bytes(b'synthetic encrypted')
+        good_receipt={'format':'h001c-local-v1','raw_name':latest.name,'raw_size':3,
+                      'raw_sha256':b.digest(latest),'encrypted_sha256':b.digest(latest.with_suffix('.zip.age')),
+                      'remote_verified':True}
+        b.retain_latest_raw(other,latest,good_receipt)
+        self.assertEqual(unmanaged.read_bytes(),b'keep')
+        with self.assertRaises(ValueError):
+            b.retain_latest_raw(other,other/'missing.zip',good_receipt)
+        # Simulate unlink failure after a valid next receipt; both raw files stay.
+        self.c['local_dir']=str(self.root/'cleanup-test')
+        self.perform(); cleanup=Path(self.c['local_dir']); old=next(cleanup.glob('*.zip'))
+        with patch.object(Path,'unlink',side_effect=OSError('synthetic cleanup failure')),self.assertRaises(OSError):
+            self.perform()
+        self.assertTrue(old.exists()); self.assertEqual(len(list(cleanup.glob('*.zip'))),2)
+
+    def test_native_file_size_ceiling_in_real_child(self):
+        code=("import sys; from pathlib import Path; from offsite_native import limit_backup_size; "
+              "limit_backup_size(1024); Path(sys.argv[1]).write_bytes(b'x'*2048)")
+        result=subprocess.run([sys.executable,'-c',code,str(self.root/'bounded-partial.zip')],
+                              env=dict(os.environ,PYTHONPATH=str(ROOT/'scripts')),capture_output=True)
+        self.assertNotEqual(result.returncode,0)
+        self.assertLessEqual((self.root/'bounded-partial.zip').stat().st_size,1024)
 
     def test_remote_mismatch_and_verification_failure_rejected(self):
         self.perform()

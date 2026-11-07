@@ -25,3 +25,11 @@ runtime/
 
 # Local Codex task orchestration/scratch files are not project source.
 l*-work/
+
+# Recovery payloads/private operator records never belong in this public repo.
+*.zip
+*.age
+*.bundle
+*recovery-identity*
+recovery-record*.json
+!config/recovery-record.example.json

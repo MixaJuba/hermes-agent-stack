@@ -8,8 +8,9 @@ H-001 **не завершено**. Це offline implementation від canonical
 
 Stdlib helpers: `scripts/offsite_backup.py`, `offsite_restore.py`, `offsite_native.py`.
 Full backup використовує справжній Hermes `run_backup`, WAL-safe копіювання.
-Raw ZIP 0600 залишається в private directory 0700; helper не видаляє жодної
-working backup. Перед upload обов'язковий age recipient із bech32 checksum;
+Raw ZIP 0600 залишається в private directory 0700. Helper захищає останній
+перевірений raw та ніколи не видаляє L-006F/L-007S або unowned copies; точна
+bounded retention policy нижче. Перед upload обов'язковий age recipient із bech32 checksum;
 відсутній/неправильний recipient або відсутні binaries — відмова. До OCI може
 потрапити лише `.age` artifact з age header; рахується encrypted SHA256,
 залишається локальний checksum. Unique UTC timestamp + UUID, no overwrite,
@@ -54,6 +55,46 @@ config не підмінені; fresh-process verification підтверджу�
 External socket
 tripwire активний; справжніх age keys, OCI або network calls у тестах немає.
 Stub ciphertext **не є доказом криптографічної працездатності age**.
+
+### Bounded raw retention / failure policy
+
+Updated config обов'язково містить `max_raw_archives=2`, `max_archive_bytes=67108864`
+(64 MiB), `max_local_bytes=536870912` (512 MiB), `min_free_bytes=268435456`
+(256 MiB). Це консервативні стартові межі, не виміряний growth. Native child
+отримує RLIMIT_FSIZE до імпортів; після backup перевіряються cap, CRC/required
+config/state ZIP members, native success і private permissions. Увесь helper
+утримує nonblocking flock: одночасний manual/timer run відмовляється.
+
+До створення ZIP рахуються **всі** raw `.zip` і залишені killed native writer
+`.zip.<pid>-<thread>.partial` у private local_dir та bytes усіх
+файлів, включно з failed/unmanaged artifacts; резервується місце для capped ZIP
+та age output плюс заданий disk reserve. За браком місця/двох raw — відмова до
+native backup. Частковий native/age/upload failure не видаляє попередню копію;
+після одного failed attempt поряд з verified raw наступні runs зупиняються до
+Local review. Нескінченного accumulation/retry немає.
+
+Лише після нового successful native backup/encryption/put/HEAD, fsync нових raw,
+ciphertext та private `.h001c-<UTC_UUID>.json` receipt helper може unlink старий
+raw: потрібні власний строгий filename, receipt version/name/verified flag, exact
+raw size/SHA і SHA збереженого ciphertext. Спочатку перевіряється існування/хеші
+**нової** retained copy. Receipt не є remote provenance або off-VM recovery record.
+Немає glob-delete за mtime або upstream `--keep N`. Unreceipted старі H-001C ZIP
+також не усиновлюються; mismatch/symlink/permission/fsync/unlink failure → FAIL,
+latest copy залишається. Тести зберігають synthetic L-006F/L-007S без змін.
+
+Encrypted local artifacts, receipts і remote objects **не видаляються автоматично**:
+local byte cap зупинить helper до заповнення диска. Local контролює growth/free
+storage, приватно розбирає failures і лише після перевіреного recovery та окремого
+дозволу прибирає конкретні зайві H-001C artifacts. L-006F/L-007S — поза cleanup.
+Зміна меж потребує capacity review, не вимкнення guard. Нативні SQLite temporary
+snapshots теж потребують фактичного VM free-space monitoring; offline cap не є
+filesystem quota. Timer failure сам не доставляє alert власнику.
+
+Початкове розгортання, promotion, provenance, key custody та off-VM recovery record:
+[RECOVERY-RUNBOOK.uk.md](RECOVERY-RUNBOOK.uk.md), G1–G4. Приватні records/keys/ZIP
+ігноруються Git; у repo є лише placeholder recovery-record example.
+Підсумкові offline результати й залишкові ризики:
+[H-001C-FINAL report](../reports/h001c-final-readiness.json).
 
 ### Coordinator review correction
 
