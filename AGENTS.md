@@ -2,6 +2,8 @@
 
 Цей файл містить сталі правила роботи для Codex та інших AI-агентів у цьому репозиторії.
 
+**Навігація:** [путівник](docs/INDEX.uk.md) · [архітектура](docs/ARCHITECTURE.uk.md) · [дорожня карта](docs/ROADMAP.uk.md). Вони не замінюють канонічний `PROJECT_STATE.md`. H-001L3 — одноразовий live PASS **за звітом оператора**, не незалежне SSH-підтвердження координатора.
+
 ## 1. Початок будь-якої роботи
 
 Перед змінами обов'язково прочитай:
@@ -85,7 +87,7 @@
 - Бюджет production: 0 грн.
 - Заборонені auto-recharge, платні fallback-и та приховані paid routes.
 - NVIDIA = `TEST ONLY`.
-- Production inference-provider не призначати наперед; кваліфікувати фактичним Hermes test loop.
+- Поточний production inference — `workers-ai / @cf/zai-org/glm-4.7-flash` після L-004C/L-006F. Не змінювати без окремого qualification gate.
 - Hermes pin: `v0.22.5` / `bf0203a794a07aac3ff764972ab9087baa4e4f4e` до окремого upgrade-рішення.
 - Telegram: штатний Hermes gateway, long polling, один poller.
 - Telethon, voice/STT/TTS зараз поза scope.
@@ -131,6 +133,7 @@
 - Спочатку запускай вузький тест; повний regression — один раз після вузького PASS.
 - Не запускай однаковий test suite повторно після PASS без нової зміни.
 - Не повторюй web research, якщо рішення вже зафіксоване і факти не змінилися.
+- Не припускай, що Cloud Codex workspace автоматично оновився з GitHub; перед новою роботою перевір локальні незбережені зміни та актуальний SHA без їхнього стирання.
 - Не делегуй Cloud задачу, яку Local може виконати одним read-only браузерним кроком, і навпаки.
 
 ## 10. Handoff format

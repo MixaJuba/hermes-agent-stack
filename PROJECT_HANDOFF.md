@@ -12,13 +12,13 @@
 
 **Що прийнято:** baseline **L-006F / PRODUCTION_READY**, реально розгорнутий на Oracle Always Free. Telegram, один poller, owner-only, Cloudflare Workers AI Free, keyed Exa, пам'ять, виконання інструментів, systemd/reboot, локальний backup + isolated restore пройшли за детальним звітом Локального Codex. Прийнятий стан записано у PROJECT_STATE.md і evidence. Це доказ прийнятого тестування, **не безперервний онлайн-моніторинг стану сьогодні**.
 
-**Активне завдання:** **H-001 — encrypted off-instance disaster recovery**. Поки що реальна резервна копія лишається на тому самому Oracle boot volume. Ціль — зашифрована копія в приватному OCI Object Storage поза диском VM плюс справжнє окреме відновлення.
+**Актуальний напрям:** H-001L3 завершено як **один real encrypted off-instance backup + isolated restore за звітом Локального Codex**. Далі — незалежність ключа/record, контроль сховища і безпечний запуск регулярного резервування тільки після окремого gate.
 
 **Поточний статус:** **H-001C-FINAL offline source ACCEPTED.** Координатор перевірив source, тести, runbook і ризики. Cloud Codex повідомив **21 targeted PASS, 50/50 full regression PASS, synthetic native roundtrip PASS**; сам координатор не запускав увесь тестовий набір у Hermes runtime й не робив live Oracle перевірок. [PR №1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) **злито в main**: merge commit `7369dee839464e2cdf8e2f0f94d362317e6ff704`, Cloud head `a6b0b1d190b78d9e7dbdfe87f121cc75fa87a049`. Документаційні G1–G4, правила обмеження raw ZIP і зовнішній recovery-record template тепер у GitHub main.
 
-**Важлива межа:** GitHub merge **НЕ ЗМІНИВ Telegram/Oracle production**. Після L-007S є один новий native local ZIP, створений 7 листопада, CRC/склад перевірені; isolated restore саме цього ZIP не виконувався. Off-VM copy відсутня, live age/OCI, free-billing, IAM, незалежні ключі й remote restore **NOT QUALIFIED**. Timer OFF. Не перевстановлювати працюючий Hermes лише через новий GitHub SHA.
+**Історична межа після merge PR №1, до H-001L3:** GitHub merge сам по собі **НЕ ЗМІНИВ Telegram/Oracle production**. Після L-007S є один новий native local ZIP, створений 7 листопада, CRC/склад перевірені; isolated restore саме цього ZIP не виконувався. Off-VM copy відсутня, live age/OCI, free-billing, IAM, незалежні ключі й remote restore **NOT QUALIFIED**. Timer OFF. Не перевстановлювати працюючий Hermes лише через новий GitHub SHA.
 
-**Наступний gate:** Local Codex перевіряє реальні безкоштовні умови Oracle, доступність незалежного ключа/recovery record, кваліфіковані age/OCI та найвужчі IAM permissions. На невідомих витратах чи неможливості безпечно зберігати ключ — STOP. За чітких дозволів — один real encrypted upload/HEAD/get та isolated native restore, без reboot/gateway changes. До live PASS автоматичний timer не вмикати.
+**Наступний gate:** не повторювати один реальний тест H-001L3. Підтвердити відновлюваність recovery key/record незалежно від одного пристрою; окремо оцінити remote retention, quota/billing і failure alerting перед активацією timer. Таймер OFF.
 
 **GitHub:** поточний main перевіряти live, бо після H-001C merge координатор оновлював PROJECT_STATE.md та цей handoff; попередні SHA/PR-draft згадки в історії є історичними, не чинним статусом.
 
@@ -238,11 +238,11 @@ ChatGPT Projects можуть використовувати файли та і�
 
 ### Коротка стартова фраза для нового чату
 
-> Продовжуємо ChatGPT Command Center / Hermes Agent. Ти головний координатор. Прочитай прикріплений PROJECT_HANDOFF.md та АКТУАЛЬНІ PROJECT_STATE.md і AGENTS.md у GitHub MixaJuba/hermes-agent-stack. Перевір main і cloud/h001c-offsite-dr-artifacts, не приймай старі SHA за актуальні. L-006F production baseline прийнятий; H-001C offline code вже прийнято і злито в main (PR #1, 7369dee8…), але Oracle production не змінено. Не повторюй Cloud-завдання. Перевір actual main і підготуй мінімальний Local gate для free billing/IAM/key custody та одного real age/OCI/isolated recovery test. Timer не вмикати до live PASS. Не змінюй живий бот, провайдерів, секрети чи main без перевірки. Пояснюй мені коротко і просто; всю технічну роботу координуй сам.
+> Продовжуємо Hermes Agent Stack. Ти головний координатор. Спочатку перечитай АКТУАЛЬНІ GitHub main/PROJECT_STATE.md, PROJECT_HANDOFF.md, AGENTS.md і H-001L3 summary. L-006F production baseline accepted; H-001C-FINAL код прийнятий і злитий; за звітом Local H-001L3 один real OCI encrypted backup/isolated restore пройшов, timer OFF. Не повторюй уже виконане. Далі — незалежний доступ до key/record, оцінка росту та безкоштовності сховища, failure alerts; лише потім дозволяти scheduled backup. Не змішуй звіт із власним live proof і не змінюй production без gate. Пояснюй власнику просто.
 
 ---
 
-**Ключова перевірка на вході:** H-001C код уже в main; перевір, чи проведені Local live preflight/OCI/age/isolated recovery і незалежне custody ключа. Не вважати GitHub merge за live rollout.
+**Ключова перевірка на вході:** H-001C уже в main, H-001L3 відомий зі звіту оператора. Перевір лише нові факти, не повторюй попередній live-тест без конкретної причини. Merge GitHub не доводить поточний стан сервера.
 
 **Оновлення документа:** після кожного прийнятого milestone або суттєвої зміни відповідальних/обмежень; публічний файл ніколи не повинен містити реальні credentials чи приватні дані.
 
@@ -261,3 +261,11 @@ Local Codex повідомив про **PASS**: створено рівно од
 ## 14. 7 листопада — coordinator offline acceptance H-001C-FINAL
 
 GitHub PR #1 merged, merge commit `7369dee839464e2cdf8e2f0f94d362317e6ff704`, reviewed Cloud source `a6b0b1d190b78d9e7dbdfe87f121cc75fa87a049`. Закрито G1–G4 documentation, додано raw ZIP bounded retention та зовнішній record template, Cloud 50/50 regression PASS. Coordinator перевірив GitHub source/docs та upstream, але не виконав власного live OCI/age або independent Hermes test run. **Production bot unchanged; no OCI bucket, no scheduled backup timer, no confirmed off-instance copy; live H-001 pending.** L-007S new native local full backup від 7 листопада — ZIP verified, isolated restore NOT RUN. Наступний відповідальний — Local Codex, мінімальний безпечний H-001 live preflight щодо фактичних €0 витрат, ключів та доступів, потім один real encrypted backup/isolated restore за необхідних дозволів. Хмарного Codex повторно не залучати без виявленого коду-defect.
+
+## 15. H-001L3 — завершене разове зовнішнє відновлення за звітом Local Codex (7 листопада 2026)
+
+Після read-only H-001L/H-001L2 зі статусом BLOCKED власник надав результати H-001L3: приватний OCI Standard bucket, вузький IAM однієї VM, кваліфіковані age/OCI CLI, зіставлення source з прийнятим Git tree, один реальний encrypted upload/HEAD/get/SHA-256/isolated native restore. Оператор повідомив PASS пам'яті, історії та сесій, конфігурації й плагінів; один Telegram poller, без restart, без видалення попередніх копій, timer OFF. Власник перевірив два захищені записи ключа.
+
+Рівень доказу: **owner-supplied operator report**, без незалежного нового SSH/OCI доступу координатора. Незалежне від одного пристрою зберігання ключа і record ще не засвідчене; повний cold recovery на новій VM не виконувався. Платні опції, за повідомленням Local, не вмикалися; доступна Free Trial/Free квота, але без гарантії майбутніх нульових списань. Не публікувати ключ, приватний record, account/object ID, деталі IAM чи архів.
+
+Наступне завдання: за мінімальних лімітів Codex довести незалежне відновлення key/record, контроль накопичення у Object Storage і повідомлення про збої; scheduled timer тільки після окремого узгодженого рішення. H-001C та L-007A/L-007S/H-001L3 повторно не запускати без ознак регресії. Нову Cloud Codex робочу копію синхронізувати лише під нове обґрунтоване завдання. Путівник: [docs/INDEX.uk.md](docs/INDEX.uk.md), summarized evidence: [reports/h001l3-operator-summary.json](reports/h001l3-operator-summary.json).

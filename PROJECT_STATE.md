@@ -174,7 +174,7 @@ Build-gates для першого production baseline закриті. Проєк
 
 1. **Не ламати accepted baseline.** Жодних upgrade/reinstall/model/provider changes без branch → test → evidence → coordinator acceptance.
 2. **Операційна відтворюваність.** Використовувати [`docs/OPERATIONS-RUNBOOK.uk.md`](docs/OPERATIONS-RUNBOOK.uk.md) для incident/restart/reboot/backup дій.
-3. **Off-site disaster recovery — PLANNED / NOT YET QUALIFIED.** Поточний backup переживає restore на цій VM, але не захищає від повної втрати boot volume/instance. Наступний окремий hardening gate має спочатку перевірити zero-cost encrypted off-site storage та реальний recovery path, не змінюючи live runtime.
+3. **Off-site disaster recovery — ONE-TIME PASS ЗА ЗВІТОМ Local Codex H-001L3.** Повідомлено про справжній зашифрований OCI upload/download/SHA-256 та isolated native restore. Незалежний SSH/OCI тест координатор не проводив; timer OFF, повний cold recovery на новій VM не перевірено. Далі потрібні незалежний recovery key/record, контроль квот, накопичення та сповіщень.
 4. **Monitoring — PLANNED.** Якщо додається автоматичний health/alerting mechanism, він має бути zero-cost, не містити secrets і не створювати другий poller.
 
 Ці пункти не скасовують `PRODUCTION_READY`; вони визначають наступний рівень стійкості.
@@ -205,6 +205,8 @@ Build-gates для першого production baseline закриті. Проєк
 - [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md) — Oracle runtime + sandbox.
 - [`docs/L002-ORACLE-HOST.uk.md`](docs/L002-ORACLE-HOST.uk.md) — Oracle host.
 - [`config/upstream.json`](config/upstream.json) — pinned Hermes upstream metadata.
+- [`reports/h001l3-operator-summary.json`](reports/h001l3-operator-summary.json) — стислий виклад H-001L3 за наданим власником звітом оператора.
+- [`docs/INDEX.uk.md`](docs/INDEX.uk.md) / [`docs/ARCHITECTURE.uk.md`](docs/ARCHITECTURE.uk.md) / [`docs/ROADMAP.uk.md`](docs/ROADMAP.uk.md) — путівник для людей, архітектура й розвиток.
 
 ## 10. Правило наступних змін
 
@@ -250,4 +252,16 @@ Offline verification H-001C-FINAL: 18 offsite + 3 recovery-readiness tests PASS;
 native synthetic orchestrator PASS; один final regression 50/50 PASS.
 Sanitized evidence: [h001c-final-readiness.json](reports/h001c-final-readiness.json).
 
-**Latest safety boundary:** L-007S fresh local ZIP (2026-11-07) verified by Local report, not restored; legacy local backups protected; no confirmed off-VM copy. `age`/OCI CLI/IAM and private key custody not yet qualified; billing trial discrepancy unresolved. No systemd timer activated. Coordinator reviewed code/diffs/documentation and upstream Hermes backup exclusion policy; Cloud reported 50/50 tests, coordinator did not independently run Hermes regression or live Oracle. Local next step must stop on any unclear cost, missing independent key custody or unauthorized resource creation.
+**Історичний стан перед H-001L3 (не поточний):** L-007S fresh local ZIP (2026-11-07) verified by Local report, not restored; legacy local backups protected; no confirmed off-VM copy. `age`/OCI CLI/IAM and private key custody not yet qualified; billing trial discrepancy unresolved. No systemd timer activated. Coordinator reviewed code/diffs/documentation and upstream Hermes backup exclusion policy; Cloud reported 50/50 tests, coordinator did not independently run Hermes regression or live Oracle. Local next step must stop on any unclear cost, missing independent key custody or unauthorized resource creation.
+
+## H-001L3 — один реальний off-instance backup та isolated restore (7 листопада 2026)
+
+**Статус: PASS ЗА ЗВІТОМ ЛОКАЛЬНОГО CODEX + підтвердження власником доступності ключа.** Це новіша подія за H-001C-FINAL. Координатор отримав повідомлення оператора через власника, але не мав незалежного SSH/OCI доступу і не запускав окремий recovery-тест.
+
+За повідомленням Local Codex створено приватний Standard OCI bucket та вузькі instance-principal IAM права; встановлено age/OCI CLI в операторському середовищі; перевірено відповідність копії коду прийнятому Git tree. Один реальний зашифрований архів завантажено до Object Storage, отримано назад, перевірено розмір/SHA-256 й відновлено пам'ять, сесії/історію, конфігурацію та плагіни у відокремленому каталозі. Сервіс Telegram не перезапускався, poller залишився один, попередні копії збережено, **таймер не активовано**.
+
+Власник підтвердив, що відкриває два захищені записи ключа. **Незалежність від втрати одного пристрою й доступність приватного recovery record з іншого пристрою не підтверджені.** Результат тесту не доводить повне cold recovery на новій VM або роботу unattended timer. За звітом платні опції не вмикалися, але майбутні €0 не можна гарантувати без контролю тарифу/обсягу/запитів. Публічний GitHub не повинен містити реальні ключі, account/object IDs, recovery-record, архіви чи приватні журнали.
+
+**Наступне рішення:** не повторювати H-001L3; перед scheduled backup перевірити незалежне зберігання recovery key/record, квоти та накопичення об'єктів, обробку помилок і сповіщення. Тільки після окремого контрольованого дозволу активувати timer. Наразі розробка H-001C не потребує нового Cloud Codex.
+
+Sanitized secondary evidence: [reports/h001l3-operator-summary.json](reports/h001l3-operator-summary.json). Це виклад наданого звіту, не незалежний machine-generated OCI log.
