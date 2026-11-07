@@ -1,0 +1,28 @@
+{
+  "schema": "h001l3-owner-supplied-operator-summary-v1",
+  "task": "H-001L3",
+  "reported_date": "2026-11-07",
+  "source": "User-supplied Local Codex final messages, not raw OCI/SSH artifacts",
+  "evidence_level": "OPERATOR_REPORTED_LIVE_PASS",
+  "independent_coordinator_oci_ssh_verification": false,
+  "results": {
+    "private_standard_bucket": "reported created",
+    "least_privilege_instance_iam": "reported",
+    "age_encrypt_upload_head_download_sha256": "reported PASS",
+    "isolated_native_restore": "reported memory/history/sessions/config/plugins PASS",
+    "telegram_gateway": "reported unchanged with one poller",
+    "legacy_backups": "reported retained",
+    "timer": "OFF",
+    "owner_key_access": "user confirmed two protected readable entries; distinct device/storage independence not confirmed",
+    "private_recovery_record": "off-device access not confirmed",
+    "billing": "Free Trial/Free Tier and no paid options reported; future charges not independently guaranteed"
+  },
+  "not_proven": [
+    "Cold recovery on a replacement VM",
+    "Unattended scheduled backups, remote retention and alerts",
+    "Separate-device private key and record recoverability",
+    "Coordinator independent live SSH/OCI audit"
+  ],
+  "secret_policy": "No private key, account identifiers, object names, checksums, recovery records or logs included.",
+  "next_gate": "Independent key/record recovery; quota/storage-growth/alert gates; separately approved timer."
+}

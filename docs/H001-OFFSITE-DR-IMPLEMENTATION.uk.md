@@ -1,6 +1,8 @@
 # H-001C — encrypted off-instance DR artifacts
 
-H-001 **не завершено**. Це offline implementation від canonical
+Це **історичний опис offline implementation H-001C**. Після нього Local Codex повідомив про одноразовий live H-001L3 encrypted off-instance backup та isolated restore, але автоматичний timer вимкнений, а повний cold recovery не перевірено. Актуальний стан: [PROJECT_STATE.md](../PROJECT_STATE.md) та [H-001L3 summary](../reports/h001l3-operator-summary.json).
+
+Offline H-001C implementation походить від canonical
 `247b0ccd3051a6b057951d99552d58f15aff5222`, не зміна працюючого Telegram-агента.
 Дизайн: [H001-OFFSITE-DR-DESIGN.uk.md](H001-OFFSITE-DR-DESIGN.uk.md).
 
@@ -108,7 +110,7 @@ get, empty/header-only stdout, а також corruption і format/size mismatch.
 Це offline contract verification, **не запуск установленого OCI CLI проти Oracle**.
 Фактичні результати: [sanitized report](../reports/h001c-offline.json).
 
-## PLANNED LIVE — тільки Local Codex після acceptance
+## Історичний план Local live qualification (одноразова перевірка виконана за звітом H-001L3)
 
 1. Перевірити actual Always Free usage/20 GB aggregate allowance та API allowance.
 2. Створити private **Standard** bucket, versioning ENABLED, retention NONE,

@@ -1,46 +1,60 @@
-# Особистий Hermes-помічник у Telegram
+# Hermes Agent Stack
 
-Цей проєкт створений, щоб мати власного текстового ШІ-помічника українською:
-написати завдання в Telegram, продовжити попередню розмову й отримати результат
-із перевіреними джерелами. Доступ до бота має лише власник.
+**Власний україномовний ШІ-помічник у Telegram:** пам'ятає контекст, шукає інформацію, використовує ізольовані інструменти й працює на окремому сервері, а не на ноутбуці власника.
 
-## Що вже працює
+Цей репозиторій містить не лише код, а й перевірювану історію рішень, тести, межі безпеки та інструкції продовження роботи.
 
-На прийнятому live baseline бот відповідає українською, тримає контекст кількох
-повідомлень, пам’ятає збережені факти після перезапуску й reboot сервера.
-Він виконує завдання інструментами Hermes та шукає через Exa з реальними посиланнями.
-Перевірено owner-only доступ, автоматичний запуск і відновлення резерву в окрему
-папку. Помилки квот обробляються без переходу на платні моделі.
+**Статус · 7 листопада 2026:** основний Telegram-агент **прийнято в експлуатацію (L-006F)**. За наданим власником звітом Локального Codex **один зашифрований зовнішній backup та ізольоване відновлення пройшли (H-001L3)**. **Автоматичне резервування й моніторинг ще не запущені.** Це останній підтверджений зріз, а не онлайн-індикатор стану сервера.
 
-```text
-Власник ↔ Telegram ↔ Hermes
-                      ├─ Cloudflare Workers AI Free — відповіді й виклики інструментів
-                      ├─ пам’ять та історія розмов
-                      ├─ Exa — пошук джерел
-                      └─ Docker — ізольоване виконання команд
-Сервер: Oracle Always Free ARM64; ноутбук не потрібний для роботи бота.
+[Путівник](docs/INDEX.uk.md) · [Архітектура](docs/ARCHITECTURE.uk.md) · [Розвиток](docs/ROADMAP.uk.md) · [Канонічний стан](PROJECT_STATE.md)
+
+## Навіщо потрібен Hermes
+
+Мета — особистий агент, доступний через звичний Telegram, із пам'яттю, пошуком джерел та можливістю виконувати контрольовані завдання. Працює незалежно від увімкненого ноутбука; доступ до Telegram-агента має лише власник.
+
+| Можливість | Реальний статус |
+| --- | --- |
+| Українська мова, кілька повідомлень у контексті | Перевірено L-006F |
+| Постійна пам'ять після restart і reboot | Перевірено L-006F |
+| Вебпошук та джерела через Exa | Перевірено L-005, L-006F |
+| Виклики інструментів в ізольованому Docker | Перевірено L-006F |
+| Owner-only доступ і один Telegram poller | Перевірено L-006F / L-007A |
+| Локальне резервування та isolated restore | Перевірено L-006F; свіжий ZIP L-007S перевірений за цілісністю |
+| Зовнішня зашифрована копія та isolated restore | **PASS за звітом Локального Codex H-001L3**, не незалежний SSH-аудит |
+| Автоматичні резерви, моніторинг, сповіщення | **Ще не ввімкнені** |
+
+## Як це працює
+
+```mermaid
+flowchart LR
+    U["Власник"] <--> T["Telegram"]
+    T <-->|"long polling"| G["Hermes Gateway"]
+    subgraph V["Oracle Cloud VM"]
+        G <--> A["Hermes Agent"]
+        A <--> M["Пам'ять / історія"]
+        A --> X["Docker-інструменти"]
+    end
+    A <--> C["Cloudflare Workers AI Free"]
+    A <--> E["Exa: пошук"]
+    V -->|"age: H-001L3 за звітом"| B["Приватне OCI Object Storage"]
 ```
 
-## Що покращується зараз
+На production закріплено Hermes v0.22.5, Cloudflare Workers AI Free, Exa, Oracle ARM64 і Docker sandbox без мережі. Реальні ключі й резервні архіви **не зберігаються в GitHub**. Детальніше — [архітектура та межі доступу](docs/ARCHITECTURE.uk.md).
 
-Production бюджет — 0 грн, без платних резервних маршрутів або автоматичних списань.
-Працюючі компоненти закріплені на перевірених версіях. Зараз готуємо зашифровану
-копію резервів поза сервером: поточний перевірений backup лежить на тій самій VM
-і не захистить від повної втрати її диска. Новий remote recovery ще **не пройшов
-live qualification**; H-001C готує лише код, offline-тести та неактивовані шаблони.
+## Ціна й обмеження
 
-[Поточний стан і докази](PROJECT_STATE.md) · [Операційний runbook](docs/OPERATIONS-RUNBOOK.uk.md) · [Безпечне розгортання та відновлення](docs/RECOVERY-RUNBOOK.uk.md) · [DR implementation](docs/H001-OFFSITE-DR-IMPLEMENTATION.uk.md)
+**Цільовий бюджет production — 0 грн**: без платних запасних моделей або автоматичного поповнення балансу. Безкоштовні квоти хмарних сервісів потребують реального контролю; майбутній рахунок не гарантується одним тестом. Голос, автономне керування двома Codex та автоматичне off-site резервування **не представлені як готові можливості**.
 
-## Документація
+Репозиторій публічний, але сам бот — приватний. Він не є готовим однокнопковим хостингом для сторонніх користувачів.
 
-- [`PROJECT_STATE.md`](PROJECT_STATE.md) — канонічний production state, межі доказу та правила наступних змін.
-- [`docs/OPERATIONS-RUNBOOK.uk.md`](docs/OPERATIONS-RUNBOOK.uk.md) — safe operations / incident handling.
-- [`AGENTS.md`](AGENTS.md) — правила для Codex та інших coding agents.
-- [`docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md`](docs/L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md) — фінальна live acceptance.
-- [`reports/l006f-production-ready.json`](reports/l006f-production-ready.json) — sanitized machine evidence.
-- [`docs/L005-EXA-QUALIFICATION.uk.md`](docs/L005-EXA-QUALIFICATION.uk.md) — Exa production qualification.
-- [`docs/C002-CLOUDFLARE-PRODUCTION.uk.md`](docs/C002-CLOUDFLARE-PRODUCTION.uk.md) — Cloudflare productionization.
-- [`docs/C002A-CATALOG-SIDECAR.uk.md`](docs/C002A-CATALOG-SIDECAR.uk.md) — plugin attestation correction.
-- [`docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md`](docs/L004C-CLOUDFLARE-WORKERS-AI-QUALIFICATION.uk.md) — live Cloudflare qualification.
-- [`docs/L003-RUNTIME-ORACLE.uk.md`](docs/L003-RUNTIME-ORACLE.uk.md) — pinned Hermes runtime + Docker sandbox on Oracle.
-- [`config/upstream.json`](config/upstream.json) — pinned upstream Hermes metadata.
+## Звідки почати
+
+| Хто ви | Що читати |
+| --- | --- |
+| Новий відвідувач | [Путівник](docs/INDEX.uk.md) · [Схема](docs/ARCHITECTURE.uk.md) |
+| Хочете побачити прогрес | [Дорожня карта](docs/ROADMAP.uk.md) · [Історія](docs/CHANGELOG.uk.md) |
+| Розробник або Codex | [AGENTS.md](AGENTS.md) · [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Оператор чи координатор | [PROJECT_STATE.md](PROJECT_STATE.md) · [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) · [Runbook](docs/RECOVERY-RUNBOOK.uk.md) |
+| Перевіряєте докази | [L-006F](reports/l006f-production-ready.json) · [H-001C](reports/h001c-final-readiness.json) · [H-001L3](reports/h001l3-operator-summary.json) |
+
+[Повна навігація й джерела](docs/INDEX.uk.md) · [Правила безпеки](SECURITY.md)

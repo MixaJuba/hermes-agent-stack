@@ -9,7 +9,7 @@ coordinator acceptance. Це інструкція, а не твердження 
 L-006F — accepted live baseline. За прийнятим handoff L-007A перевірив код/стан,
 L-007S створив один свіжий локальний full backup 7 листопада; **restore цього ZIP
 не виконували**, захищеної off-instance копії ще немає. Не повторювати L-007S.
-`PROJECT_STATE.md` і актуальний `main` — чинні рішення; PR #1 — ще draft.
+`PROJECT_STATE.md` і актуальний `main` — чинні рішення. PR #1 злито 7 листопада 2026; за пізнішим H-001L3 Local повідомив про one-time off-instance restore. Це не доводить повний cold recovery на новій VM.
 Документ закриває документаційні прогалини G1–G4; не закриває live H-001.
 
 ## G1 — початкове розгортання на чистому віддаленому host
