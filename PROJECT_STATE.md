@@ -2,7 +2,11 @@
 
 > Єдине джерело правди про поточний production-стан, прийняті рішення, межі доказу та правила наступних змін.
 
-Оновлено: **7 листопада 2026 року**.
+Оновлено: **9 листопада 2026 року**.
+
+> **Актуальний зріз, читати перед історичними розділами:** H-004L має статус **LIVE PARTIAL за звітом Локального Codex**. На Oracle, за цим звітом, розгорнуто H-003L (пошук з перевіркою дат) і H-004L (читання текстового PDF, створення документів, надсилання після окремої команди, одне одноразове нагадування). Автоматичне «створи й надішли» та точний заголовок українського PDF не пройшли; аналіз/генерація зображень не кваліфіковані. Код H-004L прийнято в `main` через [PR №5](https://github.com/MixaJuba/hermes-agent-stack/pull/5); код H-003L — через [PR №4](https://github.com/MixaJuba/hermes-agent-stack/pull/4). Це переказ звіту Local, а не незалежний SSH-аудит координатора. H-002C прийнято в GitHub через [PR №3](https://github.com/MixaJuba/hermes-agent-stack/pull/3), **backup timers залишаються OFF**.
+
+> **Найближчий продуктний етап (пропозиція, не розпочато):** H-004L2 — один запит для створення/перевірки/доставки документа, перевірка кирилиці PDF та повторного нагадування. Усі розділи нижче з назвами L-/C-/H- містять історію на дату своїх тестів; попередні «next step» не мають переваги над цим актуальним зрізом.
 
 ## 1. Загальний статус
 
@@ -271,7 +275,7 @@ Sanitized secondary evidence: [reports/h001l3-operator-summary.json](reports/h00
 Нове доручення власника після H-001L3: підготовка bounded scheduled backup,
 version-aware remote caps, короткого quota approval, durable attempt/outbox state,
 owner-only outbound alerts/приватних receipts і daily heartbeat. База
-`9602e0a5eb02a1a8b4f3d74f8275018344ce20f3`; окрема Cloud branch, не live rollout.
+`9602e0a5eb02a1a8b4f3d74f8275018344ce20f3`; код згодом прийнято в `main` через [PR №3](https://github.com/MixaJuba/hermes-agent-stack/pull/3), **не live rollout**.
 H-001L3 не повторювати. Accepted native backup/restore та provider/gateway незмінні.
 
 Реалізація не видаляє remote objects і не розширює IAM: cap/expiry/unknown
@@ -286,7 +290,7 @@ synthetic roundtrip PASS; один full regression 66/66 PASS. [Sanitized report
 
 ## H-004L — Bro Capability Pack A, 9 листопада 2026
 
-**LIVE PARTIAL, зміни на окремій гілці.** H-003L розгорнуто на Oracle й
+**LIVE PARTIAL за звітом Local Codex; код уже в `main` через [PR №5](https://github.com/MixaJuba/hermes-agent-stack/pull/5).** H-003L розгорнуто на Oracle й
 перевірено в Telegram. Пакет активував роботу зі штатними скілами, документами,
 todo й одноразовими нагадуваннями. Вхідний PDF, пам’ять, одне нагадування та
 доставка трьох реальних вкладень після явного виклику підтверджені. Звичайний

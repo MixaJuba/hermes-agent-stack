@@ -1,30 +1,32 @@
-# Путівник по Hermes Agent Stack
+# Навігація репозиторієм
 
-**Почніть із [README](../README.md).** Тут посилання для різних ролей, без дублювання канонічного стану.
+**Для першого знайомства достатньо [головної сторінки](../README.md).** Тут зібрані докази й технічні матеріали. Історичні звіти збережені, але не видаються за поточний стан.
 
-## Перший погляд
+## Про Bro зрозумілою мовою
 
-[Архітектура](ARCHITECTURE.uk.md) пояснює шлях повідомлення та межі безпеки. [Дорожня карта](ROADMAP.uk.md) відрізняє готове від запланованого. [Історія](CHANGELOG.uk.md) показує, як проєкт розвивався.
+- [Що є і що планується](ROADMAP.uk.md) — можливості та невиконані залежності.
+- [Як влаштовано систему](ARCHITECTURE.uk.md) — Telegram, модель, пошук, документи й захист.
+- [Коротка історія](CHANGELOG.uk.md) — важливі етапи без технічного журналу кожного коміту.
 
-## Для розробника та Codex
+## Перевірка тверджень про можливості
 
-[PROJECT_STATE.md](../PROJECT_STATE.md) — **джерело прийнятого стану**, обмежень і наступного gate. [AGENTS.md](../AGENTS.md) — сталі правила. [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) — передавання контексту. [CONTRIBUTING.md](../CONTRIBUTING.md) — правила змін. [scripts/](../scripts/) — код, [tests/](../tests/) — перевірки, [config/](../config/) — приклади налаштувань без секретів.
+| Питання | Документ і межа доказу |
+| --- | --- |
+| Чи працює основний Telegram-бот? | [L-006F](L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md), [машинний звіт](../reports/l006f-production-ready.json) — приймання на дату тесту, не безперервний моніторинг |
+| Чи покращено пошук новин? | [H-003L](H003L-BRO-ACCURACY.uk.md) — ізольована перевірка; подальший rollout у Telegram описано в H-004L |
+| Чи читає й створює документи, нагадує? | [H-004L](H004L-BRO-CAPABILITIES.uk.md) — **LIVE PARTIAL за звітом Local Codex**, із конкретними невдачами |
+| Чи можна відновити дані поза сервером? | [H-001L3](../reports/h001l3-operator-summary.json) — один live цикл за звітом оператора, не повний cold recovery |
+| Чи запущено автоматичне резервування? | [H-002C](H002C-SCHEDULED-BACKUP.uk.md), [офлайновий звіт](../reports/h002c-readiness.json) — код прийнято, timer не ввімкнено |
 
-## Для оператора
+**Важливо:** «тест пройшов», «код є в GitHub», «функція працювала в Telegram» та «функція працює зараз» — різні твердження. Якщо дані суперечать одне одному, перевіряйте [канонічний стан](../PROJECT_STATE.md), останні коміти та нові докази.
 
-[OPERATIONS-RUNBOOK.uk.md](OPERATIONS-RUNBOOK.uk.md) — чинні операційні процедури. [RECOVERY-RUNBOOK.uk.md](RECOVERY-RUNBOOK.uk.md) — контрольоване відновлення; **не доказ повного cold recovery** на новій VM. [H-001 implementation](H001-OFFSITE-DR-IMPLEMENTATION.uk.md) та [design](H001-OFFSITE-DR-DESIGN.uk.md) — технічні межі резервування. [SECURITY.md](../SECURITY.md) — чого ніколи не публікувати.
+## Для координатора, Codex і оператора
 
-## Рівні доказів
+- [PROJECT_STATE.md](../PROJECT_STATE.md) — поточний узгоджений зріз, відкриті ризики й наступний контрольний етап.
+- [AGENTS.md](../AGENTS.md) — права, обмеження, правила перевірки та Git-процес.
+- [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) — накопичена історія координації; **старі розділи не є інструкцією до негайного виконання**.
+- [CONTRIBUTING.md](../CONTRIBUTING.md) · [SECURITY.md](../SECURITY.md) — порядок змін та захист секретів.
+- [SETUP.uk.md](SETUP.uk.md) · [OPERATIONS-RUNBOOK.uk.md](OPERATIONS-RUNBOOK.uk.md) · [RECOVERY-RUNBOOK.uk.md](RECOVERY-RUNBOOK.uk.md) — розгортання, підтримка та відновлення.
+- [deploy/](../deploy/) · [scripts/](../scripts/) · [config/](../config/) · [tests/](../tests/) · [reports/](../reports/) — виконуваний код, налаштування, перевірки та збережені свідчення.
 
-[H-002C: контрольоване scheduled резервування](H002C-SCHEDULED-BACKUP.uk.md) —
-offline proposal після H-001L3: ліміти/alerts підготовлені, timer не ввімкнений,
-live права/квоти й доставку сповіщень ще перевірятиме Local.
-
-| Етап | Джерело | Що саме доведено |
-| --- | --- | --- |
-| L-006F | [Acceptance](L006F-FINAL-PRODUCTION-ACCEPTANCE.uk.md), [звіт](../reports/l006f-production-ready.json) | Реальні інтеграційні тести на дату звіту, не live-моніторинг |
-| L-007A / L-007S | [Handoff](../PROJECT_HANDOFF.md) | Результати Локального Codex, без публічних приватних SSH-журналів |
-| H-001C-FINAL | [Офлайн-звіт](../reports/h001c-final-readiness.json), [PR №1](https://github.com/MixaJuba/hermes-agent-stack/pull/1) | Код злито; age/OCI у тестах імітувалися |
-| H-001L3 | [Переказ звіту оператора](../reports/h001l3-operator-summary.json) | Один реальний зашифрований upload/download/restore **зі слів Local Codex**, без незалежного SSH-підтвердження |
-
-**Тлумачення статусів:** «ACCEPTED» означає приймання в межах доказів; «OPERATOR-REPORTED» — наданий звіт без незалежного повтору; «OFFLINE» — тестування без production; «PLANNED» — ще не реалізовано; «BLOCKED» — відома невиконана передумова. Якщо джерела суперечать, звіряйте актуальний main, [PROJECT_STATE.md](../PROJECT_STATE.md) і свіжі докази; старі звіти зберігайте як історію.
+**Архівні етапи:** документи з префіксами `C`/`L` та ранні `H001` у каталозі `docs/` пояснюють, *як* було отримано теперішній результат. Їхні старі плани не перевизначають чинний стек. Видаляти такі записи заради коротшого списку файлів небезпечно.
