@@ -1,17 +1,25 @@
-# Основні етапи розвитку
+# Головні зміни
 
-Це коротка історія, а не заміна [Git commits](https://github.com/MixaJuba/hermes-agent-stack/commits/main/) та [evidence](../reports/).
+Коротка хронологія. Це не журнал production-подій у реальному часі: докази подані за комітами й звітами. [Повна історія GitHub](https://github.com/MixaJuba/hermes-agent-stack/commits/main).
+
+## 9 листопада 2026
+
+**H-004L · перший пакет реальних можливостей.** За звітом Локального Codex на Oracle активовано H-003L і набір для документів/нагадувань. Telegram прочитав PDF, отримав згенеровані PDF/DOCX/XLSX **після окремої команди доставки**, надіслав одне нагадування. Перевірено 69 тестів, 7 пропущено. **PARTIAL**, не завершення всіх сценаріїв. [Деталі](H004L-BRO-CAPABILITIES.uk.md) · [PR №5](https://github.com/MixaJuba/hermes-agent-stack/pull/5).
+
+## 8 листопада 2026
+
+**H-003L · точніший пошук свіжих матеріалів.** Виявлено помилки дат і добору посилань, реалізовано `web_search_recent`. Перші тести були ізольованими; про розгортання в Telegram повідомлено вже в H-004L. [Перевірки](H003L-BRO-ACCURACY.uk.md) · [PR №4](https://github.com/MixaJuba/hermes-agent-stack/pull/4).
 
 ## 7 листопада 2026
 
-- **H-001L3:** за наданим власником звітом Локального Codex — приватний OCI bucket, обмежені IAM-права, один реальний age upload/download/SHA256 та isolated restore; Telegram без рестарту, timer OFF. Власник підтвердив читання двох записів ключа. [Межі доказу](../reports/h001l3-operator-summary.json).
-- **H-001C-FINAL:** код і документацію H-001 злито через [PR №1](https://github.com/MixaJuba/hermes-agent-stack/pull/1). 21 цільовий і 50 regression тестів за звітом Cloud Codex; age/OCI імітувалися.
-- **L-007A / L-007S:** read-only перевірка production та новий локальний backup без перезапуску gateway.
+**H-002C · код автоматизованого резервування.** У GitHub прийнято обмежені спроби, контроль обсягу та сповіщення; **timer не активовано**. [Межі](H002C-SCHEDULED-BACKUP.uk.md) · [PR №3](https://github.com/MixaJuba/hermes-agent-stack/pull/3).
+
+**H-001L3 · зовнішній зашифрований backup.** Один upload/download/ізольоване відновлення **за звітом оператора**, без незалежної перевірки координатором. [Вторинний звіт](../reports/h001l3-operator-summary.json).
+
+**H-001C-FINAL · безпечні процедури відновлення.** Офлайновий код, інструкції та тести прийнято через [PR №1](https://github.com/MixaJuba/hermes-agent-stack/pull/1).
 
 ## 2 листопада 2026
 
-- **L-006F:** робочий owner-only Telegram-агент, пам'ять, Exa, tool call, systemd/reboot, локальний isolated restore.
-- **L-005, L-004C, C-001/C-002/C-002A:** вибір Exa та Cloudflare, обробка квот, конфігурація й перевірка plugin pin.
-- **L-001—L-003:** підготовка Oracle ARM64, Hermes runtime та ізольованого Docker.
+**L-006F · початковий робочий Bro.** Telegram, пам’ять, Exa, базові інструменти, доступ лише власнику, один poller і перевірки відновлення. [Звіт](../reports/l006f-production-ready.json).
 
-Історичні документи зберігають статуси на момент створення. Нові результати **додають**, а не переписують минулі докази.
+Старі документи зберігають історію своїх етапів. Їхні статуси не повинні підміняти новіші випробування.
