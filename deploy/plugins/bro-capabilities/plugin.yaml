@@ -1,0 +1,3 @@
+name: bro-capabilities
+version: 1.0.0
+description: Owner-only one-shot reminders using the native Hermes scheduler.

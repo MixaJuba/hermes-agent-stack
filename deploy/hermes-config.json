@@ -42,7 +42,10 @@
       "memory",
       "session_search",
       "web",
-      "clarify"
+      "clarify",
+      "skills",
+      "todo",
+      "bro-capabilities"
     ]
   },
   "terminal": {
@@ -50,7 +53,7 @@
     "cwd": "/workspace",
     "timeout": 30,
     "lifetime_seconds": 300,
-    "docker_image": "hermes-ua-sandbox:local",
+    "docker_image": "hermes-ua-sandbox:documents-v1",
     "docker_network": false,
     "docker_mount_cwd_to_workspace": false,
     "docker_run_as_host_user": true,
@@ -65,6 +68,13 @@
     "container_memory": 512,
     "container_persistent": true,
     "docker_shm_size": "64m"
+  },
+  "gateway": {
+    "strict": true,
+    "trust_recent_files": false,
+    "media_delivery_allow_dirs": [
+      "/var/lib/hermes-agent/sandboxes/docker/default/workspace/out"
+    ]
   },
   "web": {
     "backend": "exa",
@@ -198,7 +208,8 @@
   "plugins": {
     "enabled": [
       "cloudflare-workers-ai-provider",
-      "bro-recent-web"
+      "bro-recent-web",
+      "bro-capabilities"
     ],
     "auto_apply": false,
     "auto_update_check_hours": 0

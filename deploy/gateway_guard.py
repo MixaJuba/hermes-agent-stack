@@ -11,6 +11,10 @@ PROVIDER = 'workers-ai'
 MODEL = '@cf/zai-org/glm-4.7-flash'
 BASE_PLUGINS = ['cloudflare-workers-ai-provider']
 BRO_PLUGIN = 'bro-recent-web'
+CAPABILITY_PLUGIN = 'bro-capabilities'
+CAPABILITY_PLUGINS = [*BASE_PLUGINS, BRO_PLUGIN, CAPABILITY_PLUGIN]
+DOCUMENT_OUT = '/var/lib/hermes-agent/sandboxes/docker/default/workspace/out'
+BASE_TOOLSETS = ['terminal', 'file', 'memory', 'session_search', 'web', 'clarify']
 AUX_TASKS = ('vision', 'compression', 'skills_hub', 'approval', 'review', 'mcp',
              'title_generation', 'memory_query_rewrite', 'tts_audio_tags', 'voice_chat',
              'triage_specifier', 'kanban_decomposer', 'profile_describer', 'goal_judge',
@@ -51,6 +55,9 @@ def validate(config, env):
             web.get(k) is not False for k in ('keyless_fallback', 'keyless_rescue')):
         problems.append('web routing must be Exa only, with rescue disabled')
     terminal = config.get('terminal', {})
+    plugin_config = config.get('plugins', {})
+    enabled = plugin_config.get('enabled')
+    capabilities = enabled == CAPABILITY_PLUGINS
     if (terminal.get('backend') != 'docker' or terminal.get('docker_network') is not False
             or terminal.get('docker_mount_cwd_to_workspace') is not False
             or terminal.get('docker_run_as_host_user') is not True
@@ -58,6 +65,17 @@ def validate(config, env):
         problems.append('tool sandbox permits host data, secrets or network')
     if terminal.get('docker_extra_args') != ['--pids-limit', '128']:
         problems.append('unreviewed Docker flags')
+    if capabilities:
+        gateway = config.get('gateway', {})
+        if (terminal.get('docker_image') != 'hermes-ua-sandbox:documents-v1'
+                or gateway.get('strict') is not True or gateway.get('trust_recent_files') is not False
+                or gateway.get('media_delivery_allow_dirs') != [DOCUMENT_OUT]
+                or any(env.get(k) for k in ('HERMES_MEDIA_DELIVERY_STRICT', 'HERMES_MEDIA_TRUST_RECENT_FILES',
+                                          'HERMES_MEDIA_ALLOW_DIRS'))):
+            problems.append('document delivery must use the isolated sandbox and restricted output path')
+        toolsets = config.get('platform_toolsets', {}).get('telegram')
+        if toolsets != [*BASE_TOOLSETS, 'skills', 'todo', CAPABILITY_PLUGIN]:
+            problems.append('unreviewed Telegram capability toolsets')
     if config.get('auth', {}).get('adopt_external_logins') is not False:
         problems.append('external login adoption must stay disabled')
     if config.get('security', {}).get('allow_lazy_installs') is not False:
@@ -82,14 +100,13 @@ def validate(config, env):
             or auxiliary.get('background_review', {}).get('enabled') is not False
             or config.get('curator', {}).get('enabled') is not False):
         problems.append('background/title/curator inference must remain disabled')
-    plugin_config = config.get('plugins', {})
-    enabled = plugin_config.get('enabled')
-    if (enabled not in (BASE_PLUGINS, [*BASE_PLUGINS, BRO_PLUGIN])
+    if (enabled not in (BASE_PLUGINS, [*BASE_PLUGINS, BRO_PLUGIN], CAPABILITY_PLUGINS)
             or plugin_config.get('auto_apply') is not False or plugin_config.get('auto_update_check_hours') != 0):
         problems.append('unreviewed plugin selection or automatic plugin changes')
-    if enabled == [*BASE_PLUGINS, BRO_PLUGIN] and config.get('timezone') != 'Europe/Kyiv':
+    if enabled in ([*BASE_PLUGINS, BRO_PLUGIN], CAPABILITY_PLUGINS) and config.get('timezone') != 'Europe/Kyiv':
         problems.append('Bro search requires the Europe/Kyiv profile clock')
-    if enabled == [*BASE_PLUGINS, BRO_PLUGIN] and config.get('tools', {}).get('tool_search', {}).get('enabled') != 'off':
+    if (enabled in ([*BASE_PLUGINS, BRO_PLUGIN], CAPABILITY_PLUGINS)
+            and config.get('tools', {}).get('tool_search', {}).get('enabled') != 'off'):
         problems.append('Bro search must be exposed directly in the selected web toolset')
     telegram = config.get('platforms', {}).get('telegram', {})
     if (telegram.get('dm_policy') != 'allowlist' or telegram.get('group_policy') != 'disabled'
@@ -101,10 +118,14 @@ def validate(config, env):
 
 
 def validate_bro_plugin(config, home):
-    if config.get('plugins', {}).get('enabled') != [*BASE_PLUGINS, BRO_PLUGIN]:
+    if config.get('plugins', {}).get('enabled') not in ([*BASE_PLUGINS, BRO_PLUGIN], CAPABILITY_PLUGINS):
         return []
-    expected = Path(__file__).resolve().parent / 'plugins' / BRO_PLUGIN
-    installed = home / 'plugins' / BRO_PLUGIN
+    return validate_reviewed_plugin(home, BRO_PLUGIN)
+
+
+def validate_reviewed_plugin(home, name):
+    expected = Path(__file__).resolve().parent / 'plugins' / name
+    installed = home / 'plugins' / name
     files = {'__init__.py', 'plugin.yaml'}
     try:
         if (installed.is_symlink() or installed.parent.is_symlink()
@@ -112,10 +133,38 @@ def validate_bro_plugin(config, home):
                 or any((installed / name).is_symlink() or not (installed / name).is_file()
                        or (installed / name).read_bytes() != (expected / name).read_bytes()
                        for name in files)):
-            return ['Bro search plugin differs from the reviewed package']
+            return [f'{name} differs from the reviewed package']
     except OSError:
-        return ['Bro search plugin is missing or unreadable']
+        return [f'{name} is missing or unreadable']
     return []
+
+
+def validate_plugins(config, home):
+    from cloudflare_plugin import attest as attest_cloudflare
+
+    enabled = config.get('plugins', {}).get('enabled')
+    problems = validate_bro_plugin(config, home)
+    if enabled == CAPABILITY_PLUGINS:
+        problems += validate_reviewed_plugin(home, CAPABILITY_PLUGIN)
+    reviewed = enabled[1:] if enabled in ([*BASE_PLUGINS, BRO_PLUGIN], CAPABILITY_PLUGINS) and not problems else ()
+    return problems + attest_cloudflare(home, reviewed_plugins=reviewed)
+
+
+def load_config(path):
+    text = path.read_text(encoding='utf-8')
+    try:
+        data = json.loads(text)
+    except ValueError:
+        # The native /busy command and onboarding can save the same profile as YAML.
+        import yaml
+
+        try:
+            data = yaml.safe_load(text)
+        except yaml.YAMLError as error:
+            raise ValueError('invalid YAML') from error
+    if not isinstance(data, dict):
+        raise ValueError('profile must be a mapping')
+    return data
 
 
 def validate_pairing(home, owner):
@@ -146,14 +195,12 @@ def main():
     parser.add_argument('--secret-file', type=Path, required=True)
     args = parser.parse_args()
     try:
-        config = json.loads(args.config.read_text())
-    except (OSError, ValueError):
-        print('BLOCKED: generated JSON configuration is missing or invalid')
+        config = load_config(args.config)
+    except (OSError, ValueError, ImportError):
+        print('BLOCKED: profile configuration is missing or invalid')
         return 2
     problems = validate(config, os.environ)
-    from cloudflare_plugin import attest as attest_cloudflare
-    problems += attest_cloudflare(args.config.parent)
-    problems += validate_bro_plugin(config, args.config.parent)
+    problems += validate_plugins(config, args.config.parent)
     problems += validate_pairing(args.config.parent, os.environ.get('TELEGRAM_ALLOWED_USERS', ''))
     try:
         st = args.secret_file.lstat()

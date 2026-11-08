@@ -283,3 +283,15 @@ inventory → STOP. Безстрокова ротація та нові permissi
 Offline evidence: 16 targeted schedule + 18 existing offsite tests PASS; native
 synthetic roundtrip PASS; один full regression 66/66 PASS. [Sanitized report](reports/h002c-readiness.json).
 Це readiness для bounded pilot, не підтвердження live IAM/квот/alerts або timer.
+
+## H-004L — Bro Capability Pack A, 9 листопада 2026
+
+**LIVE PARTIAL, зміни на окремій гілці.** H-003L розгорнуто на Oracle й
+перевірено в Telegram. Пакет активував роботу зі штатними скілами, документами,
+todo й одноразовими нагадуваннями. Вхідний PDF, пам’ять, одне нагадування та
+доставка трьох реальних вкладень після явного виклику підтверджені. Звичайний
+запит на створення й надсилання не гарантував виклику доставки. Точний
+український заголовок у згенерованому PDF не підтвердився.
+
+Startup guard пройшов, один poller, owner-only. Аналіз і генерацію зображень
+відкладено за рішенням власника. [Докази й відтворення](docs/H004L-BRO-CAPABILITIES.uk.md).

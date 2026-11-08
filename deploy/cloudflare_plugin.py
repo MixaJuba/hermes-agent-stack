@@ -34,7 +34,7 @@ def validate_catalog_sidecar(target):
     return []
 
 
-def attest(home):
+def attest(home, *, reviewed_plugins=()):
     problems = []
     plugins = Path(home) / 'plugins'
     target = plugins / PIN['name']
@@ -56,7 +56,8 @@ def attest(home):
         if any(p.name not in PIN['files'] and p.name not in {'__pycache__', CATALOG_SIDECAR}
                for p in target.iterdir()):
             problems.append('unreviewed files in Cloudflare plugin')
-        if any(p.is_dir() and not p.name.startswith('.') and p.name != PIN['name'] for p in plugins.iterdir()):
+        approved = {PIN['name'], *reviewed_plugins}
+        if any(p.is_dir() and not p.name.startswith('.') and p.name not in approved for p in plugins.iterdir()):
             problems.append('additional profile plugins require review')
     except (OSError, ValueError, AttributeError):
         problems.append('Cloudflare plugin provenance/integrity unavailable')
