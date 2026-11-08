@@ -20,17 +20,19 @@ def main():
     args.home.mkdir(mode=0o700, parents=True, exist_ok=True)
     locales = args.home / 'locales'
     locales.mkdir(mode=0o700, exist_ok=True)
-    plugin = Path('plugins/bro-recent-web')
+    plugins = [Path('plugins') / name for name in ('bro-recent-web', 'bro-capabilities')]
     # O_EXCL prevents accidental loss of an existing user profile/config.
-    for name, content in [('config.yaml', json.dumps(config, ensure_ascii=False, indent=2) + '\n'),
-                          ('SOUL.md', (here / 'SOUL.md').read_text(encoding='utf-8')),
-                          ('locales/uk.yaml', (here / 'locales/uk.yaml').read_text(encoding='utf-8')),
-                          *((plugin / name, (here / plugin / name).read_text(encoding='utf-8'))
+    rendered = (json.dumps(config, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+    for name, content in [('config.yaml', rendered),
+                          ('SOUL.md', (here / 'SOUL.md').read_bytes()),
+                          ('locales/uk.yaml', (here / 'locales/uk.yaml').read_bytes()),
+                          *((plugin / name, (here / plugin / name).read_bytes())
+                            for plugin in plugins
                             for name in ('__init__.py', 'plugin.yaml'))]:
         path = args.home / name
-        if path.parent == args.home / plugin:
+        if path.parent in [args.home / plugin for plugin in plugins]:
             path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        with path.open('x', encoding='utf-8') as file:
+        with path.open('xb') as file:
             os.chmod(path, 0o600)
             file.write(content)
     print('Non-secret profile rendered. No credentials written; gateway not started.')

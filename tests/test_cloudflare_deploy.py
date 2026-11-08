@@ -52,7 +52,7 @@ class CloudflareDeploymentTests(unittest.TestCase):
             self.assertEqual(config['fallback_providers'], [])
             self.assertEqual(config['timezone'], 'Europe/Kyiv')
             self.assertEqual(config['tools']['tool_search']['enabled'], 'off')
-            self.assertEqual(config['plugins']['enabled'], ['cloudflare-workers-ai-provider', 'bro-recent-web'])
+            self.assertEqual(config['plugins']['enabled'], ['cloudflare-workers-ai-provider', 'bro-recent-web', 'bro-capabilities'])
             guard_path = ROOT / 'deploy/gateway_guard.py'
             guard_spec = importlib.util.spec_from_file_location('gateway_guard', guard_path)
             guard = importlib.util.module_from_spec(guard_spec)

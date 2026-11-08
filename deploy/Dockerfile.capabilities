@@ -1,0 +1,11 @@
+FROM python:3.14-slim@sha256:cd89c30eda26ee911a4611b18680086e0ea42e6f5f8cbe653d07fa7958c9cec8
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+COPY sandbox-documents.txt /tmp/sandbox-documents.txt
+RUN python -m pip install --no-cache-dir --only-binary=:all: -r /tmp/sandbox-documents.txt \
+    && python -m pip check \
+    && rm /tmp/sandbox-documents.txt
+RUN mkdir -p /workspace && chown 10001:10001 /workspace
+USER 10001:10001
+WORKDIR /workspace

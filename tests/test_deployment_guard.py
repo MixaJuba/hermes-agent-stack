@@ -89,6 +89,26 @@ class DeploymentGuardTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(guard.validate(config, self.env))
 
+    def test_capabilities_cannot_expose_a_broad_media_path_or_cron_tool(self):
+        config = copy.deepcopy(self.config)
+        config['gateway']['media_delivery_allow_dirs'] = ['/var/lib/hermes-agent']
+        self.assertTrue(guard.validate(config, self.env))
+        config = copy.deepcopy(self.config)
+        config['platform_toolsets']['telegram'].append('cronjob')
+        self.assertTrue(guard.validate(config, self.env))
+        self.assertTrue(guard.validate(self.config, {**self.env, 'HERMES_MEDIA_TRUST_RECENT_FILES': 'true'}))
+
+    def test_native_yaml_rewrite_keeps_owner_guard(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'config.yaml'
+            path.write_text('display:\n  busy_input_mode: queue\n', encoding='utf-8')
+            try:
+                data = guard.load_config(path)
+            except ImportError:
+                self.skipTest('Host PyYAML is unavailable')
+            self.assertEqual(data['display']['busy_input_mode'], 'queue')
+            self.assertTrue(guard.validate(data, self.env))
+
     def test_foreign_pairing_is_blocked_and_never_deleted(self):
         for directory in ('pairing', 'platforms/pairing'):
             with self.subTest(directory=directory), tempfile.TemporaryDirectory() as tmp:
