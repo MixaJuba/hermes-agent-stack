@@ -9,6 +9,8 @@ import stat
 
 PROVIDER = 'workers-ai'
 MODEL = '@cf/zai-org/glm-4.7-flash'
+BASE_PLUGINS = ['cloudflare-workers-ai-provider']
+BRO_PLUGIN = 'bro-recent-web'
 AUX_TASKS = ('vision', 'compression', 'skills_hub', 'approval', 'review', 'mcp',
              'title_generation', 'memory_query_rewrite', 'tts_audio_tags', 'voice_chat',
              'triage_specifier', 'kanban_decomposer', 'profile_describer', 'goal_judge',
@@ -81,9 +83,14 @@ def validate(config, env):
             or config.get('curator', {}).get('enabled') is not False):
         problems.append('background/title/curator inference must remain disabled')
     plugin_config = config.get('plugins', {})
-    if (plugin_config.get('enabled') != ['cloudflare-workers-ai-provider']
+    enabled = plugin_config.get('enabled')
+    if (enabled not in (BASE_PLUGINS, [*BASE_PLUGINS, BRO_PLUGIN])
             or plugin_config.get('auto_apply') is not False or plugin_config.get('auto_update_check_hours') != 0):
-        problems.append('only the pinned Cloudflare provider plugin may be selected')
+        problems.append('unreviewed plugin selection or automatic plugin changes')
+    if enabled == [*BASE_PLUGINS, BRO_PLUGIN] and config.get('timezone') != 'Europe/Kyiv':
+        problems.append('Bro search requires the Europe/Kyiv profile clock')
+    if enabled == [*BASE_PLUGINS, BRO_PLUGIN] and config.get('tools', {}).get('tool_search', {}).get('enabled') != 'off':
+        problems.append('Bro search must be exposed directly in the selected web toolset')
     telegram = config.get('platforms', {}).get('telegram', {})
     if (telegram.get('dm_policy') != 'allowlist' or telegram.get('group_policy') != 'disabled'
             or telegram.get('guest_mode') is not False or telegram.get('allowed_chats') != [owner]):
@@ -91,6 +98,24 @@ def validate(config, env):
     if telegram.get('extra') or any(telegram.get(k) for k in ('allow_from', 'allow_admin_from', 'group_allow_from')):
         problems.append('additional Telegram policy overrides require review')
     return sorted(set(problems))
+
+
+def validate_bro_plugin(config, home):
+    if config.get('plugins', {}).get('enabled') != [*BASE_PLUGINS, BRO_PLUGIN]:
+        return []
+    expected = Path(__file__).resolve().parent / 'plugins' / BRO_PLUGIN
+    installed = home / 'plugins' / BRO_PLUGIN
+    files = {'__init__.py', 'plugin.yaml'}
+    try:
+        if (installed.is_symlink() or installed.parent.is_symlink()
+                or {p.name for p in installed.iterdir()} != files
+                or any((installed / name).is_symlink() or not (installed / name).is_file()
+                       or (installed / name).read_bytes() != (expected / name).read_bytes()
+                       for name in files)):
+            return ['Bro search plugin differs from the reviewed package']
+    except OSError:
+        return ['Bro search plugin is missing or unreadable']
+    return []
 
 
 def validate_pairing(home, owner):
@@ -128,6 +153,7 @@ def main():
     problems = validate(config, os.environ)
     from cloudflare_plugin import attest as attest_cloudflare
     problems += attest_cloudflare(args.config.parent)
+    problems += validate_bro_plugin(config, args.config.parent)
     problems += validate_pairing(args.config.parent, os.environ.get('TELEGRAM_ALLOWED_USERS', ''))
     try:
         st = args.secret_file.lstat()

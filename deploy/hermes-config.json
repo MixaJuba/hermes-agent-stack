@@ -1,4 +1,10 @@
 {
+  "timezone": "Europe/Kyiv",
+  "tools": {
+    "tool_search": {
+      "enabled": "off"
+    }
+  },
   "model": {
     "provider": "workers-ai",
     "default": "@cf/zai-org/glm-4.7-flash",
@@ -191,7 +197,8 @@
   },
   "plugins": {
     "enabled": [
-      "cloudflare-workers-ai-provider"
+      "cloudflare-workers-ai-provider",
+      "bro-recent-web"
     ],
     "auto_apply": false,
     "auto_update_check_hours": 0
