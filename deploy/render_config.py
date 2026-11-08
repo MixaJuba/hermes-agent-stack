@@ -20,12 +20,17 @@ def main():
     args.home.mkdir(mode=0o700, parents=True, exist_ok=True)
     locales = args.home / 'locales'
     locales.mkdir(mode=0o700, exist_ok=True)
+    plugin = Path('plugins/bro-recent-web')
     # O_EXCL prevents accidental loss of an existing user profile/config.
     for name, content in [('config.yaml', json.dumps(config, ensure_ascii=False, indent=2) + '\n'),
-                          ('SOUL.md', (here / 'SOUL.md').read_text()),
-                          ('locales/uk.yaml', (here / 'locales/uk.yaml').read_text())]:
+                          ('SOUL.md', (here / 'SOUL.md').read_text(encoding='utf-8')),
+                          ('locales/uk.yaml', (here / 'locales/uk.yaml').read_text(encoding='utf-8')),
+                          *((plugin / name, (here / plugin / name).read_text(encoding='utf-8'))
+                            for name in ('__init__.py', 'plugin.yaml'))]:
         path = args.home / name
-        with path.open('x') as file:
+        if path.parent == args.home / plugin:
+            path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        with path.open('x', encoding='utf-8') as file:
             os.chmod(path, 0o600)
             file.write(content)
     print('Non-secret profile rendered. No credentials written; gateway not started.')
